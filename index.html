@@ -1597,16 +1597,32 @@
             const THUMB_BATCH = 10;
             const totalCount = rawPhotoFiles.length;
 
+            // 어떤 구조의 폴더를 넣든 하위 폴더들을 독립 행성계로 스마트 그룹화
+            // 1단계: 하위 폴더가 실제로 존재하는지 검사 (깊이 3 이상인 파일이 있는지 확인)
+            const hasSubfolders = rawPhotoFiles.some(f => {
+                const rel = (f.webkitRelativePath || f.name).replace(/\\/g, '/');
+                return rel.split('/').filter(Boolean).length >= 3;
+            });
+
             for (let i = 0; i < totalCount; i += THUMB_BATCH) {
                 const slice = rawPhotoFiles.slice(i, i + THUMB_BATCH);
                 const batchPromises = slice.map(async (f) => {
                     const relPath = (f.webkitRelativePath || f.name).replace(/\\/g, '/');
                     const parts = relPath.split('/').filter(Boolean);
                     
-                    // 🌟 [어떤 폴더 깊이든 100% 소속 폴더 보장]: 사진이 위치한 바로 직전 상위 폴더명을 카테고리로 지정
-                    let category = "기본";
-                    if (parts.length >= 2) {
-                        category = parts[parts.length - 2];
+                    let category = "메인";
+                    if (hasSubfolders) {
+                        // 하위 폴더들이 있는 경우: 루트 바로 아래 사진은 "루트", 하위 폴더 사진은 해당 하위 폴더명
+                        if (parts.length <= 2) {
+                            category = "메인";
+                        } else {
+                            category = parts[1]; // 예: rootFolder/pinter1/image.jpg -> pinter1
+                        }
+                    } else {
+                        // 하위 폴더 없이 단일 폴더에 사진들이 있는 경우: 상위 폴더명 또는 기본
+                        if (parts.length >= 2) {
+                            category = parts[parts.length - 2];
+                        }
                     }
 
                     // 300px 고화질 WebP 인메모리 캔버스 압축 (VRAM 폭발 0%)
@@ -1646,12 +1662,61 @@
             });
         }
 
-        // 🌐 화면 드래그 앤 드롭으로도 폴더 바로 열기 지원
+        // 🌐 화면 드래그 앤 드롭으로도 폴더 바로 열기 지원 (폴더 재귀 완벽 순회)
         window.addEventListener("dragover", (e) => {
             e.preventDefault();
         });
-        window.addEventListener("drop", (e) => {
+        window.addEventListener("drop", async (e) => {
             e.preventDefault();
+            const items = e.dataTransfer && e.dataTransfer.items;
+            if (items && items.length > 0) {
+                const files = [];
+                async function scanEntry(entry, path = "") {
+                    if (entry.isFile) {
+                        return new Promise((resolve) => {
+                            entry.file((f) => {
+                                // 드래그 앤 드롭 시 누락되는 webkitRelativePath를 가상 주입
+                                Object.defineProperty(f, 'webkitRelativePath', {
+                                    value: path ? `${path}/${f.name}` : f.name,
+                                    writable: false
+                                });
+                                files.push(f);
+                                resolve();
+                            }, () => resolve());
+                        });
+                    } else if (entry.isDirectory) {
+                        const reader = entry.createReader();
+                        const readAll = () => new Promise((resolve) => {
+                            reader.readEntries(async (entries) => {
+                                if (entries.length === 0) {
+                                    resolve();
+                                } else {
+                                    for (const child of entries) {
+                                        await scanEntry(child, path ? `${path}/${entry.name}` : entry.name);
+                                    }
+                                    await readAll();
+                                    resolve();
+                                }
+                            }, () => resolve());
+                        });
+                        await readAll();
+                    }
+                }
+
+                for (let i = 0; i < items.length; i++) {
+                    const it = items[i];
+                    if (it.webkitGetAsEntry) {
+                        const entry = it.webkitGetAsEntry();
+                        if (entry) await scanEntry(entry, "");
+                    }
+                }
+
+                if (files.length > 0) {
+                    handleFolderSelection(files);
+                    return;
+                }
+            }
+
             if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                 handleFolderSelection(e.dataTransfer.files);
             }
