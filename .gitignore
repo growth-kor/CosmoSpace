@@ -9,3 +9,7 @@ thumbnails/
 galaxy_data.json
 .DS_Store
 __pycache__/
+
+# Whitelist only public sponsor card artwork
+!gozogo4.png
+
