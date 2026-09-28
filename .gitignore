@@ -1,0 +1,11 @@
+# Git ignore for large media binaries and caches
+thumbnails/
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.avif
+*.pkl
+galaxy_data.json
+.DS_Store
+__pycache__/

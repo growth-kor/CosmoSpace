@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🪐 Pinterest 3D Galaxy Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #07090e;
+            --accent-primary: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --surface-glass: rgba(15, 18, 28, 0.78);
+            --border-glass: rgba(255, 255, 255, 0.12);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-base);
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text-main);
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* --- UI Overlay Header --- */
+        #ui-overlay {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            z-index: 100;
+            max-width: 460px;
+            background: var(--surface-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 18px;
+            padding: 20px 22px;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.1);
+            transition: opacity 0.3s ease;
+        }
+
+        .header-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 12px;
+            background: rgba(99, 102, 241, 0.18);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #c7d2fe;
+        }
+
+        .sub-desc {
+            margin: 0 0 14px 0;
+            font-size: 12.5px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Search Input */
+        .search-box {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .search-box input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 9px 14px 9px 34px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .search-box input:focus {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: #818cf8;
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        /* Category Filter Tags */
+        #filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 140px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        #filter-bar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #filter-bar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: #cbd5e1;
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 11.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .filter-btn .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #94a3b8;
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-primary);
+            border-color: #818cf8;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+
+        /* Controls Toolbar (Top Right) */
+        #controls-bar {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            z-index: 100;
+            display: flex;
+            gap: 8px;
+        }
+
+        .tool-btn {
+            background: var(--surface-glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .tool-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #111528 0%, #05060a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            transition: opacity 0.6s ease, visibility 0.6s;
+        }
+
+        .spinner-ring {
+            width: 54px;
+            height: 54px;
+            border: 4px solid rgba(99, 102, 241, 0.2);
+            border-top-color: #818cf8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #loading-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar-bg {
+            width: 260px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        #progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            border-radius: 10px;
+            transition: width 0.15s ease;
+        }
+
+        #progress-sub {
+            font-size: 12px;
+            color: #818cf8;
+        }
+
+        /* --- Preview Modal Card --- */
+        #preview-card {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            z-index: 100;
+            background: var(--surface-glass);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-glass);
+            padding: 16px;
+            border-radius: 18px;
+            display: none;
+            color: #fff;
+            max-width: 320px;
+            width: calc(100vw - 48px);
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(99, 102, 241, 0.15);
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .preview-img-container {
+            position: relative;
+            width: 100%;
+            max-height: 300px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        #preview-img {
+            max-width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .preview-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        #preview-badge {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            background: #6366f1;
+            color: #fff;
+        }
+
+        .preview-ratio {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        #preview-name {
+            font-size: 13px;
+            font-weight: 600;
+            word-break: break-all;
+            color: #e2e8f0;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .preview-btn-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-full-view {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 7px 0;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-full-view:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-close-card {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94a3b8;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn-close-card:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+    <!-- Three.js + Controls + Tween.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+</head>
+
+<body>
+    <!-- 3D WebGL Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Loading Indicator -->
+    <div id="loading-overlay">
+        <div class="spinner-ring"></div>
+        <div id="loading-text">🌌 은하 데이터 로딩 중...</div>
+        <div class="progress-bar-bg">
+            <div id="progress-bar-fill"></div>
+        </div>
+        <div id="progress-sub">0 / 0 (0%)</div>
+    </div>
+
+    <!-- UI Overlay Header -->
+    <div id="ui-overlay">
+        <div class="header-title-row">
+            <h1>🪐 Pinterest Galaxy</h1>
+            <div id="total-count-badge" class="stats-badge">0장</div>
+        </div>
+        <p class="sub-desc">클릭하여 초점 이동 · 드래그 & 휠로 은하계 탐색</p>
+        
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" placeholder="파일명 또는 카테고리 검색..." autocomplete="off">
+        </div>
+
+        <div id="filter-bar">
+            <button class="filter-btn active" onclick="filterCategory('ALL')">
+                <span class="dot" style="background:#818cf8;"></span>전체보기
+            </button>
+        </div>
+    </div>
+
+    <!-- Controls Bar (Top Right) -->
+    <div id="controls-bar">
+        <button class="tool-btn" onclick="resetCameraView()">🔭 전체 조망</button>
+        <button class="tool-btn" onclick="toggleAutoRotate()">🔄 자동 회전</button>
+    </div>
+
+    <!-- Preview Card (Bottom Right) -->
+    <div id="preview-card">
+        <div class="preview-img-container">
+            <img id="preview-img" src="" alt="preview">
+        </div>
+        <div class="preview-meta-row">
+            <div id="preview-badge">CATEGORY</div>
+            <div id="preview-ratio" class="preview-ratio">1.0 : 1</div>
+        </div>
+        <div id="preview-name">filename.jpg</div>
+        <div class="preview-btn-row">
+            <a id="preview-link" class="btn-full-view" href="#" target="_blank">🔍 원본 열기</a>
+            <button class="btn-close-card" onclick="closePreview()">닫기</button>
+        </div>
+    </div>
+
+    <script>
+        // Palette for category color coding
+        const CATEGORY_PALETTE = [
+            '#6366f1', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6',
+            '#06b6d4', '#f43f5e', '#14b8a6', '#3b82f6', '#d946ef'
+        ];
+        const categoryColorMap = {};
+
+        function getCategoryColor(cat) {
+            if (!categoryColorMap[cat]) {
+                const keys = Object.keys(categoryColorMap);
+                categoryColorMap[cat] = CATEGORY_PALETTE[keys.length % CATEGORY_PALETTE.length];
+            }
+            return categoryColorMap[cat];
+        }
+
+        // Three.js Scene Setup
+        const container = document.getElementById("canvas-container");
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x07090e, 0.0010);
+
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 1, 5000);
+        const DEFAULT_CAM_POS = new THREE.Vector3(0, 100, 520);
+        camera.position.copy(DEFAULT_CAM_POS);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x07090e, 1.0);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.maxDistance = 2500;
+        controls.minDistance = 10;
+        controls.autoRotate = false;
+        controls.autoRotateSpeed = 0.6;
+
+        // Background Star Dust Particles
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 1500;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount * 3; i++) {
+            starPositions[i] = (Math.random() - 0.5) * 3000;
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMat = new THREE.PointsMaterial({
+            color: 0x64748b,
+            size: 2,
+            transparent: true,
+            opacity: 0.6
+        });
+        const starField = new THREE.Points(starGeo, starMat);
+        scene.add(starField);
+
+        const textureLoader = new THREE.TextureLoader();
+        const sprites = [];
+        const categories = new Set();
+        let currentFilter = "ALL";
+        let searchQuery = "";
+
+        // UI Element References
+        const loadingOverlay = document.getElementById("loading-overlay");
+        const progressBarFill = document.getElementById("progress-bar-fill");
+        const progressSub = document.getElementById("progress-sub");
+        const totalBadge = document.getElementById("total-count-badge");
+        const searchInput = document.getElementById("search-input");
+        const previewCard = document.getElementById("preview-card");
+        const previewImg = document.getElementById("preview-img");
+        const previewName = document.getElementById("preview-name");
+        const previewBadge = document.getElementById("preview-badge");
+        const previewRatio = document.getElementById("preview-ratio");
+        const previewLink = document.getElementById("preview-link");
+
+        // Load Galaxy JSON
+        fetch("galaxy_data.json")
+            .then(res => {
+                if (!res.ok) throw new Error("galaxy_data.json 파일을 찾을 수 없습니다.");
+                return res.json();
+            })
+            .then(data => {
+                const totalItems = data.length;
+                totalBadge.innerText = `${totalItems}장`;
+                let loadedCount = 0;
+
+                function updateProgress() {
+                    loadedCount++;
+                    const percent = Math.min(100, Math.round((loadedCount / totalItems) * 100));
+                    progressBarFill.style.width = percent + "%";
+                    progressSub.innerText = `${loadedCount} / ${totalItems} (${percent}%)`;
+
+                    if (loadedCount >= totalItems) {
+                        setTimeout(() => {
+                            loadingOverlay.style.opacity = "0";
+                            setTimeout(() => loadingOverlay.style.display = "none", 600);
+                        }, 200);
+                    }
+                }
+
+                data.forEach(item => {
+                    categories.add(item.category);
+                    const catColor = getCategoryColor(item.category);
+
+                    // Load Thumbnail Texture
+                    const thumbUrl = item.thumb_path || item.path;
+                    textureLoader.load(
+                        thumbUrl,
+                        (texture) => {
+                            const material = new THREE.SpriteMaterial({
+                                map: texture,
+                                transparent: true,
+                                depthWrite: false
+                            });
+                            const sprite = new THREE.Sprite(material);
+
+                            // Maintain original aspect ratio without distortion
+                            const aspect = item.aspect_ratio || 1.0;
+                            const baseSize = 20;
+                            if (aspect >= 1.0) {
+                                sprite.scale.set(baseSize * aspect, baseSize, 1);
+                            } else {
+                                sprite.scale.set(baseSize, baseSize / aspect, 1);
+                            }
+
+                            sprite.position.set(item.x, item.y, item.z);
+                            sprite.userData = { ...item, originalScale: sprite.scale.clone(), color: catColor };
+
+                            scene.add(sprite);
+                            sprites.push(sprite);
+                            updateProgress();
+                        },
+                        undefined,
+                        (err) => {
+                            console.warn("텍스처 로드 실패:", thumbUrl, err);
+                            updateProgress();
+                        }
+                    );
+                });
+
+                // Populate Category Buttons
+                const filterBar = document.getElementById("filter-bar");
+                categories.forEach(cat => {
+                    const btn = document.createElement("button");
+                    btn.className = "filter-btn";
+                    const color = getCategoryColor(cat);
+                    btn.innerHTML = `<span class="dot" style="background:${color};"></span>${cat}`;
+                    btn.onclick = () => filterCategory(cat);
+                    filterBar.appendChild(btn);
+                });
+            })
+            .catch(err => {
+                console.error("데이터 로드 오류:", err);
+                document.getElementById("loading-text").innerText = "⚠️ galaxy_data.json 로드 실패";
+                progressSub.innerText = "process_data.py를 먼저 실행해 주세요.";
+            });
+
+        // Filter Logic
+        window.filterCategory = function (catName) {
+            currentFilter = catName;
+            document.querySelectorAll(".filter-btn").forEach(btn => {
+                const text = btn.innerText.trim();
+                btn.classList.toggle("active", (text === catName) || (catName === 'ALL' && text === '전체보기'));
+            });
+            applyFilters();
+        };
+
+        // Instant Search
+        searchInput.addEventListener("input", (e) => {
+            searchQuery = e.target.value.toLowerCase().trim();
+            applyFilters();
+        });
+
+        function applyFilters() {
+            let visibleCount = 0;
+            sprites.forEach(sprite => {
+                const data = sprite.userData;
+                const matchCat = (currentFilter === "ALL" || data.category === currentFilter);
+                const matchSearch = !searchQuery || data.filename.toLowerCase().includes(searchQuery) || data.category.toLowerCase().includes(searchQuery);
+
+                const isVisible = matchCat && matchSearch;
+                sprite.visible = isVisible;
+                if (isVisible) visibleCount++;
+            });
+            totalBadge.innerText = `${visibleCount}장 표시 중`;
+        }
+
+        // Raycaster for Hover & Click
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let hoveredSprite = null;
+
+        window.addEventListener("pointermove", (e) => {
+            if (e.target.closest("#ui-overlay") || e.target.closest("#preview-card") || e.target.closest("#controls-bar")) {
+                document.body.style.cursor = "default";
+                return;
+            }
+
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const visibleSprites = sprites.filter(s => s.visible);
+            const intersects = raycaster.intersectObjects(visibleSprites);
+
+            if (intersects.length > 0) {
+                const target = intersects[0].object;
+                if (hoveredSprite !== target) {
+                    if (hoveredSprite && hoveredSprite.userData.originalScale) {
+                        hoveredSprite.scale.copy(hoveredSprite.userData.originalScale);
+                    }
+                    hoveredSprite = target;
+                    if (target.userData.originalScale) {
+                        target.scale.copy(target.userData.originalScale).multiplyScalar(1.25);
+                    }
+                }
+                document.body.style.cursor = "pointer";
+            } else {
+                if (hoveredSprite && hoveredSprite.userData.originalScale) {
+                    hoveredSprite.scale.copy(hoveredSprite.userData.originalScale);
+                    hoveredSprite = null;
+                }
+                document.body.style.cursor = "default";
+            }
+        });
+
+        // Click Action -> Focus & Fly to Image
+        window.addEventListener("click", (e) => {
+            if (e.target.closest("#ui-overlay") || e.target.closest("#preview-card") || e.target.closest("#controls-bar")) return;
+
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const visibleSprites = sprites.filter(s => s.visible);
+            const intersects = raycaster.intersectObjects(visibleSprites);
+
+            if (intersects.length > 0) {
+                const target = intersects[0].object;
+                const item = target.userData;
+
+                // Update Preview Card
+                previewImg.src = item.path;
+                previewBadge.innerText = item.category;
+                previewBadge.style.background = item.color || "#6366f1";
+                previewRatio.innerText = `비율: ${item.aspect_ratio || 1.0}`;
+                previewName.innerText = item.filename;
+                previewLink.href = item.path;
+                previewCard.style.display = "block";
+
+                // Smooth Fly-to Animation
+                const targetPos = new THREE.Vector3().copy(target.position).add(new THREE.Vector3(0, 0, 45));
+                new TWEEN.Tween(camera.position)
+                    .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 800)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .start();
+
+                new TWEEN.Tween(controls.target)
+                    .to({ x: target.position.x, y: target.position.y, z: target.position.z }, 800)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .start();
+            }
+        });
+
+        window.closePreview = function() {
+            previewCard.style.display = "none";
+        };
+
+        window.resetCameraView = function() {
+            new TWEEN.Tween(camera.position)
+                .to({ x: DEFAULT_CAM_POS.x, y: DEFAULT_CAM_POS.y, z: DEFAULT_CAM_POS.z }, 900)
+                .easing(TWEEN.Easing.Cubic.Out)
+                .start();
+
+            new TWEEN.Tween(controls.target)
+                .to({ x: 0, y: 0, z: 0 }, 900)
+                .easing(TWEEN.Easing.Cubic.Out)
+                .start();
+        };
+
+        window.toggleAutoRotate = function() {
+            controls.autoRotate = !controls.autoRotate;
+        };
+
+        // Window Resize
+        window.addEventListener("resize", () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Main Animation Loop
+        function animate(time) {
+            requestAnimationFrame(animate);
+            TWEEN.update(time);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+
+</html>
