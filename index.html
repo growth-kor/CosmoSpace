@@ -561,8 +561,8 @@
         <!-- Sliders for Space Expansion, Node Size, and Focus Dimming -->
         <div class="sliders-panel">
             <div class="slider-item">
-                <span>🌌 은하 팽창:</span>
-                <input type="range" id="spread-slider" min="1.0" max="4.0" step="0.1" value="1.8">
+                <span id="spread-label">🌌 은하 팽창:</span>
+                <input type="range" id="spread-slider" min="0.5" max="3.5" step="0.1" value="1.8">
                 <span id="spread-val" class="val-badge">1.8x</span>
             </div>
             <div class="slider-item">
@@ -663,6 +663,8 @@
 
         // Interactive Sliders State
         let galaxySpread = 1.8; // Default 1.8x spread for breathing room!
+        let sphereRadiusScale = 1.0; // Default 1.0x sphere size (adjustable 0.3x ~ 3.0x!)
+        let gridSpacingScale = 1.0;  // Default 1.0x grid spacing
         let nodeBaseSize = 16;  // Default 16px size
         let focusDimOpacity = 0.20; // Default 20% opacity for non-focused sprites (adjustable 0% ~ 100%)
 
@@ -679,6 +681,7 @@
         const previewRatio = document.getElementById("preview-ratio");
         const previewLink = document.getElementById("preview-link");
         const focusBanner = document.getElementById("focus-banner");
+        const spreadLabel = document.getElementById("spread-label");
         const spreadSlider = document.getElementById("spread-slider");
         const spreadVal = document.getElementById("spread-val");
         const sizeSlider = document.getElementById("size-slider");
@@ -805,8 +808,9 @@
             const count = visibleSprites.length;
             if (count === 0) return;
 
-            // Radius scales dynamically with item count so items don't overlap on shell
-            const radius = Math.max(300, Math.sqrt(count) * 16.5);
+            // Radius scales dynamically with count and user's sphereRadiusScale!
+            const baseRadius = Math.max(300, Math.sqrt(count) * 16.5);
+            const radius = baseRadius * sphereRadiusScale;
             const goldenRatio = (1 + Math.sqrt(5)) / 2;
 
             visibleSprites.forEach((s, idx) => {
@@ -829,8 +833,8 @@
 
             const cols = Math.ceil(Math.sqrt(count * 1.5));
             const rows = Math.ceil(count / cols);
-            const spacingX = Math.max(nodeBaseSize * 2.2, 34);
-            const spacingY = Math.max(nodeBaseSize * 1.9, 30);
+            const spacingX = Math.max(nodeBaseSize * 2.2, 34) * gridSpacingScale;
+            const spacingY = Math.max(nodeBaseSize * 1.9, 30) * gridSpacingScale;
             const offsetX = ((cols - 1) * spacingX) / 2;
             const offsetY = ((rows - 1) * spacingY) / 2;
 
@@ -868,11 +872,17 @@
 
             if (mode === 'grid') {
                 controls.enablePan = true;
+                spreadLabel.innerText = "🔲 격자 간격:";
+                spreadSlider.min = "0.5";
+                spreadSlider.max = "3.0";
+                spreadSlider.value = gridSpacingScale;
+                spreadVal.innerText = `${gridSpacingScale.toFixed(1)}x`;
+
                 const visibleCount = sprites.filter(s => s.visible).length;
                 const cols = Math.ceil(Math.sqrt(visibleCount * 1.5));
                 const rows = Math.ceil(visibleCount / cols);
-                const spacingX = Math.max(nodeBaseSize * 2.2, 34);
-                const spacingY = Math.max(nodeBaseSize * 1.9, 30);
+                const spacingX = Math.max(nodeBaseSize * 2.2, 34) * gridSpacingScale;
+                const spacingY = Math.max(nodeBaseSize * 1.9, 30) * gridSpacingScale;
                 const fitZ = Math.max(cols * spacingX * 0.9, rows * spacingY * 1.25, 750);
 
                 new TWEEN.Tween(camera.position)
@@ -884,10 +894,17 @@
                     .easing(TWEEN.Easing.Cubic.InOut)
                     .start();
             } else if (mode === 'sphere') {
-                // 구체 표면 모드: 구의 중심 (0,0,0) 시선 고정 & 시선 빗겨남 방지(enablePan 비활성화)
+                // 구체 표면 모드: 구의 크기 조절 슬라이더 연동
                 controls.enablePan = false;
+                spreadLabel.innerText = "🌐 구체 크기:";
+                spreadSlider.min = "0.3";
+                spreadSlider.max = "3.0";
+                spreadSlider.value = sphereRadiusScale;
+                spreadVal.innerText = `${sphereRadiusScale.toFixed(1)}x`;
+
+                const camZ = 920 * sphereRadiusScale;
                 new TWEEN.Tween(camera.position)
-                    .to({ x: 0, y: 80, z: 920 }, 1000)
+                    .to({ x: 0, y: 80, z: camZ }, 1000)
                     .easing(TWEEN.Easing.Cubic.InOut)
                     .start();
                 new TWEEN.Tween(controls.target)
@@ -896,24 +913,48 @@
                     .start();
             } else {
                 controls.enablePan = true;
+                spreadLabel.innerText = "🌌 은하 팽창:";
+                spreadSlider.min = "0.5";
+                spreadSlider.max = "4.0";
+                spreadSlider.value = galaxySpread;
+                spreadVal.innerText = `${galaxySpread.toFixed(1)}x`;
                 resetCameraView();
             }
         };
 
         // --- Sliders Listeners ---
-        // 1. Galaxy Expansion Slider (1.0x ~ 4.0x)
+        // 1. Dynamic Mode Expansion/Size Slider (Galaxy Spread / Sphere Radius / Grid Spacing)
         spreadSlider.addEventListener("input", (e) => {
-            galaxySpread = parseFloat(e.target.value);
-            spreadVal.innerText = `${galaxySpread.toFixed(1)}x`;
+            const val = parseFloat(e.target.value);
+            spreadVal.innerText = `${val.toFixed(1)}x`;
 
-            sprites.forEach(sprite => {
-                if (sprite.userData && sprite.userData.baseGalaxyPos) {
-                    sprite.userData.currentGalaxyPos.copy(sprite.userData.baseGalaxyPos).multiplyScalar(galaxySpread);
-                    if (currentLayout === 'galaxy') {
-                        sprite.position.copy(sprite.userData.currentGalaxyPos);
+            if (currentLayout === 'sphere') {
+                sphereRadiusScale = val;
+                calculateSphereLayout();
+                sprites.forEach(sprite => {
+                    if (sprite.visible) {
+                        sprite.position.copy(sprite.userData.spherePos);
                     }
-                }
-            });
+                });
+            } else if (currentLayout === 'grid') {
+                gridSpacingScale = val;
+                calculateGridLayout();
+                sprites.forEach(sprite => {
+                    if (sprite.visible) {
+                        sprite.position.copy(sprite.userData.gridPos);
+                    }
+                });
+            } else {
+                galaxySpread = val;
+                sprites.forEach(sprite => {
+                    if (sprite.userData && sprite.userData.baseGalaxyPos) {
+                        sprite.userData.currentGalaxyPos.copy(sprite.userData.baseGalaxyPos).multiplyScalar(galaxySpread);
+                        if (currentLayout === 'galaxy') {
+                            sprite.position.copy(sprite.userData.currentGalaxyPos);
+                        }
+                    }
+                });
+            }
         });
 
         // 2. Node Size Slider (8px ~ 28px)
