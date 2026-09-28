@@ -1446,26 +1446,38 @@
                     const jsonText = await jsonFile.text();
                     const rawData = JSON.parse(jsonText);
 
-                    // 썸네일 파일 맵 구축
+                    // 썸네일 및 원본 파일 맵 구축 (절대 단순 파일명으로 퉁치지 않고 '폴더/파일명' 전체 상대경로로만 엄격 매핑!)
                     const thumbMap = new Map();
                     thumbFiles.forEach(tf => {
-                        const norm = tf.webkitRelativePath.replace(/\\/g, '/');
-                        thumbMap.set(norm, tf);
-                        // 파일명으로도 보조 매핑
-                        thumbMap.set(tf.name, tf);
+                        const raw = tf.webkitRelativePath.replace(/\\/g, '/');
+                        thumbMap.set(raw, tf);
+                        // 최상위 선택 폴더명을 제거한 상대 경로도 등록 (예: pinter/thumbnails/... -> thumbnails/...)
+                        const parts = raw.split('/').filter(Boolean);
+                        if (parts.length > 1) {
+                            thumbMap.set(parts.slice(1).join('/'), tf);
+                        }
                     });
 
-                    // 원본 파일 맵 구축
                     const origMap = new Map();
                     allFiles.forEach(f => {
-                        const norm = (f.webkitRelativePath || f.name).replace(/\\/g, '/');
-                        origMap.set(norm, f);
-                        origMap.set(f.name, f);
+                        const raw = (f.webkitRelativePath || f.name).replace(/\\/g, '/');
+                        origMap.set(raw, f);
+                        // 최상위 선택 폴더명을 제거한 상대 경로도 등록 (예: pinter/pinter4/photo.jpg -> pinter4/photo.jpg)
+                        const parts = raw.split('/').filter(Boolean);
+                        if (parts.length > 1) {
+                            origMap.set(parts.slice(1).join('/'), f);
+                        }
                     });
 
                     const processedData = rawData.map(it => {
-                        const tFile = thumbMap.get(it.thumb_path) || thumbMap.get(it.thumb_path ? it.thumb_path.split('/').pop() : "");
-                        const oFile = origMap.get(it.path) || origMap.get(it.filename);
+                        // 1. 정확한 상대 경로로 썸네일 매칭
+                        const normThumb = (it.thumb_path || "").replace(/\\/g, '/');
+                        const tFile = thumbMap.get(normThumb);
+
+                        // 2. 정확한 상대 경로로 원본 파일 매칭 (동일 파일명 충돌 완전 차단!)
+                        const normPath = (it.path || "").replace(/\\/g, '/');
+                        const oFile = origMap.get(normPath);
+
                         const tUrl = tFile ? URL.createObjectURL(tFile) : it.thumb_path;
                         const oUrl = oFile ? URL.createObjectURL(oFile) : (tUrl || it.path);
 
@@ -1487,10 +1499,10 @@
                 }
             }
 
-            // 2. 신규 사진 폴더 (또는 일반 사진들) ➔ 고화질 인메모리 캔버스 썸네일 압축 파이프라인
+            // 2. 신규 사진 폴더 (어떤 사용자의 어떤 폴더든 폴더별 자동 격리 분류)
             const rawPhotoFiles = allFiles.filter(f => {
                 const name = f.name.toLowerCase();
-                const rel = (f.webkitRelativePath || f.name).toLowerCase();
+                const rel = (f.webkitRelativePath || f.name).toLowerCase().replace(/\\/g, '/');
                 return validExts.some(ext => name.endsWith(ext)) && !rel.includes('/.') && !rel.includes('/thumbnails/');
             });
 
@@ -1512,13 +1524,13 @@
             for (let i = 0; i < totalCount; i += THUMB_BATCH) {
                 const slice = rawPhotoFiles.slice(i, i + THUMB_BATCH);
                 const batchPromises = slice.map(async (f) => {
-                    const relPath = f.webkitRelativePath || f.name;
-                    const parts = relPath.split('/');
+                    const relPath = (f.webkitRelativePath || f.name).replace(/\\/g, '/');
+                    const parts = relPath.split('/').filter(Boolean);
+                    
+                    // 🌟 [어떤 폴더 깊이든 100% 소속 폴더 보장]: 사진이 위치한 바로 직전 상위 폴더명을 카테고리로 지정
                     let category = "기본";
-                    if (parts.length > 2) {
-                        category = parts[1]; // 하위 폴더명을 카테고리로 지정
-                    } else if (parts.length === 2) {
-                        category = parts[0];
+                    if (parts.length >= 2) {
+                        category = parts[parts.length - 2];
                     }
 
                     // 300px 고화질 WebP 인메모리 캔버스 압축 (VRAM 폭발 0%)
@@ -1526,7 +1538,7 @@
 
                     return {
                         filename: f.name,
-                        path: thumbUrl, // 초기에는 썸네일 주소, 필요 시 fileObj로부터 원본 스왑
+                        path: thumbUrl,
                         thumb_path: thumbUrl,
                         category: category,
                         aspect_ratio: aspect,
