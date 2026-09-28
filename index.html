@@ -16,13 +16,13 @@
         }
 
         :root {
-            --bg-base: #07090e;
-            --accent-primary: #6366f1;
-            --accent-glow: rgba(99, 102, 241, 0.45);
-            --surface-glass: rgba(15, 18, 28, 0.85);
-            --border-glass: rgba(255, 255, 255, 0.14);
+            --bg-base: #08090b;
+            --accent-primary: #ffffff;
+            --accent-glow: rgba(255, 255, 255, 0.08);
+            --surface-glass: rgba(18, 20, 24, 0.88);
+            --border-glass: rgba(255, 255, 255, 0.12);
             --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --text-muted: #8e95a2;
         }
 
         * {
@@ -63,7 +63,7 @@
             border: 1px solid var(--border-glass);
             border-radius: 18px;
             padding: 18px 20px;
-            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.12);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.1);
             transition: opacity 0.3s ease;
         }
 
@@ -79,9 +79,7 @@
             font-size: 19px;
             font-weight: 800;
             letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #ffffff;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -92,9 +90,9 @@
             font-weight: 700;
             padding: 3px 9px;
             border-radius: 12px;
-            background: rgba(99, 102, 241, 0.2);
-            border: 1px solid rgba(99, 102, 241, 0.4);
-            color: #c7d2fe;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #e2e8f0;
         }
 
         .sub-desc {
@@ -113,7 +111,7 @@
         .search-box input {
             width: 100%;
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             padding: 8px 14px;
             border-radius: 10px;
             color: #fff;
@@ -124,9 +122,9 @@
         }
 
         .search-box input:focus {
-            background: rgba(255, 255, 255, 0.09);
-            border-color: #818cf8;
-            box-shadow: 0 0 12px var(--accent-glow);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
         }
 
         .search-icon {
@@ -187,11 +185,15 @@
         }
 
         .filter-btn.active {
-            background: var(--accent-primary);
-            border-color: #818cf8;
-            color: #fff;
+            background: #ffffff;
+            border-color: #ffffff;
+            color: #08090b;
             font-weight: 700;
-            box-shadow: 0 4px 14px var(--accent-glow);
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.14);
+        }
+
+        .filter-btn.active .dot {
+            background: #08090b !important;
         }
 
         /* --- Controls Toolbar (Top Right) --- */
@@ -217,7 +219,7 @@
             background: var(--surface-glass);
             backdrop-filter: blur(16px);
             border: 1px solid var(--border-glass);
-            color: #fff;
+            color: #e2e8f0;
             padding: 7px 12px;
             border-radius: 11px;
             font-size: 11.5px;
@@ -231,15 +233,18 @@
         }
 
         .tool-btn:hover {
-            background: rgba(255, 255, 255, 0.18);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: #fff;
             transform: translateY(-1px);
         }
 
         .tool-btn.active-mode {
-            background: #4f46e5;
-            border-color: #818cf8;
-            box-shadow: 0 0 14px var(--accent-glow);
+            background: #ffffff;
+            border-color: #ffffff;
+            color: #08090b;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(255, 255, 255, 0.15);
         }
 
         /* Sliders Panel */
@@ -279,8 +284,8 @@
             width: 14px;
             height: 14px;
             border-radius: 50%;
-            background: #818cf8;
-            box-shadow: 0 0 8px var(--accent-primary);
+            background: #ffffff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
             cursor: pointer;
             transition: transform 0.1s ease;
         }
@@ -291,7 +296,7 @@
 
         .val-badge {
             font-size: 10.5px;
-            color: #a5b4fc;
+            color: #94a3b8;
             min-width: 32px;
         }
 
@@ -302,18 +307,18 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 100;
-            background: rgba(99, 102, 241, 0.92);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(14px);
-            border: 1px solid #818cf8;
+            border: 1px solid rgba(255, 255, 255, 0.3);
             padding: 7px 18px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 700;
-            color: #fff;
+            color: #08090b;
             display: none;
             align-items: center;
             gap: 8px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             cursor: pointer;
         }
 
@@ -324,7 +329,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at center, #111528 0%, #05060a 100%);
+            background: radial-gradient(circle at center, #111318 0%, #08090b 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -334,10 +339,10 @@
         }
 
         .spinner-ring {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(99, 102, 241, 0.2);
-            border-top-color: #818cf8;
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(255, 255, 255, 0.12);
+            border-top-color: #ffffff;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 18px;
@@ -368,14 +373,14 @@
         #progress-bar-fill {
             width: 0%;
             height: 100%;
-            background: linear-gradient(90deg, #6366f1, #a855f7);
+            background: #ffffff;
             border-radius: 10px;
             transition: width 0.15s ease;
         }
 
         #progress-sub {
             font-size: 12px;
-            color: #818cf8;
+            color: #94a3b8;
         }
 
         /* --- Preview Modal Card --- */
@@ -394,7 +399,7 @@
             color: #fff;
             max-width: 320px;
             width: calc(100vw - 48px);
-            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(99, 102, 241, 0.15);
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.1);
             animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -443,7 +448,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(5, 7, 12, 0.88);
+            background: rgba(5, 7, 10, 0.92);
             backdrop-filter: blur(28px);
             -webkit-backdrop-filter: blur(28px);
             z-index: 1000;
@@ -474,7 +479,7 @@
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9);
             border-radius: 16px;
             border: 1px solid var(--border-glass);
-            background: rgba(15, 18, 28, 0.96);
+            background: rgba(18, 20, 24, 0.96);
             padding: 18px;
         }
 
@@ -507,8 +512,8 @@
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: #6366f1;
-            border: 2px solid #fff;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             color: #fff;
             font-size: 18px;
             font-weight: 700;
@@ -517,12 +522,12 @@
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-            transition: transform 0.2s ease;
+            transition: all 0.2s ease;
         }
 
         .lightbox-close-btn:hover {
             transform: scale(1.15);
-            background: #4f46e5;
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .preview-meta-row {
@@ -537,7 +542,8 @@
             border-radius: 8px;
             font-size: 11px;
             font-weight: 700;
-            background: #6366f1;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: #fff;
         }
 
@@ -562,9 +568,9 @@
         }
 
         .btn-tool-action {
-            background: rgba(99, 102, 241, 0.22);
-            border: 1px solid rgba(99, 102, 241, 0.45);
-            color: #c7d2fe;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: #e2e8f0;
             padding: 6px 10px;
             border-radius: 8px;
             font-size: 11px;
@@ -577,7 +583,8 @@
         }
 
         .btn-tool-action:hover {
-            background: rgba(99, 102, 241, 0.45);
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.3);
             color: #fff;
             transform: translateY(-1px);
         }
@@ -733,10 +740,10 @@
     </div>
 
     <script>
-        // Palette for category color coding
+        // Palette for category color coding (정제된 미니멀 티타늄 & 모노크롬 스튜디오 팔레트)
         const CATEGORY_PALETTE = [
-            '#6366f1', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6',
-            '#06b6d4', '#f43f5e', '#14b8a6', '#3b82f6', '#d946ef'
+            '#e2e8f0', '#94a3b8', '#cbd5e1', '#64748b', '#cbd5e1',
+            '#d4d4d8', '#a1a1aa', '#71717a', '#a8a29e', '#78716c'
         ];
         const categoryColorMap = {};
 
@@ -761,7 +768,7 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setClearColor(0x07090e, 1.0);
+        renderer.setClearColor(0x08090b, 1.0);
         container.appendChild(renderer.domElement);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -782,10 +789,10 @@
         }
         starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
         const starMat = new THREE.PointsMaterial({
-            color: 0x64748b,
-            size: 2,
+            color: 0x475569,
+            size: 1.8,
             transparent: true,
-            opacity: 0.4
+            opacity: 0.35
         });
         const starField = new THREE.Points(starGeo, starMat);
         scene.add(starField);
@@ -832,26 +839,26 @@
         const planetMetaMap = new Map();
         const planetLabels = [];
 
-        // 텍스트를 담은 3D 네온 빌보드 스프라이트 생성기
+        // 텍스트를 담은 3D 미니멀 티타늄 빌보드 스프라이트 생성기
         function createPlanetLabelSprite(text, count, colorHex) {
             const canvas = document.createElement("canvas");
             canvas.width = 512;
             canvas.height = 128;
             const ctx = canvas.getContext("2d");
 
-            // 배경 네온 필박스
-            ctx.fillStyle = "rgba(15, 18, 28, 0.85)";
-            ctx.strokeStyle = colorHex || "#818cf8";
-            ctx.lineWidth = 4;
+            // 절제된 차콜 글래스 필박스 (과한 네온 번짐 제거)
+            ctx.fillStyle = "rgba(18, 20, 24, 0.90)";
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+            ctx.lineWidth = 2.5;
             const r = 24;
             ctx.beginPath();
             ctx.roundRect(16, 16, 480, 96, r);
             ctx.fill();
             ctx.stroke();
 
-            // 네온 글로우 텍스트
-            ctx.shadowColor = colorHex || "#818cf8";
-            ctx.shadowBlur = 12;
+            // 차분하고 선명한 화이트 텍스트
+            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+            ctx.shadowBlur = 4;
             ctx.fillStyle = "#ffffff";
             ctx.font = "bold 34px 'DeltaGlassKR', sans-serif";
             ctx.textAlign = "center";
