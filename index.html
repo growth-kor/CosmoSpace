@@ -541,7 +541,7 @@
         </div>
 
         <div id="filter-bar">
-            <button class="filter-btn active" onclick="filterCategory('ALL')">
+            <button class="filter-btn active" data-category="ALL" onclick="filterCategory('ALL')">
                 <span class="dot" style="background:#818cf8;"></span>전체보기
             </button>
         </div>
@@ -765,6 +765,7 @@
                 categories.forEach(cat => {
                     const btn = document.createElement("button");
                     btn.className = "filter-btn";
+                    btn.dataset.category = cat;
                     const color = getCategoryColor(cat);
                     btn.innerHTML = `<span class="dot" style="background:${color};"></span>${cat}`;
                     btn.onclick = () => filterCategory(cat);
@@ -949,24 +950,52 @@
             }
         });
 
-        // Filter Logic
+        // Multi-Select Category Filter Logic
+        const selectedCategories = new Set(["ALL"]);
+
         window.filterCategory = function (catName) {
-            currentFilter = catName;
+            if (catName === "ALL") {
+                selectedCategories.clear();
+                selectedCategories.add("ALL");
+            } else {
+                if (selectedCategories.has("ALL")) {
+                    // 전체보기 상태에서 특정 폴더를 누르면 해당 폴더 1개만 우선 선택
+                    selectedCategories.clear();
+                    selectedCategories.add(catName);
+                } else {
+                    // 다중 선택 토글 (이미 선택되어 있으면 해제, 없으면 추가)
+                    if (selectedCategories.has(catName)) {
+                        selectedCategories.delete(catName);
+                        // 선택된 폴더가 하나도 없으면 자동으로 '전체보기' 복귀
+                        if (selectedCategories.size === 0) {
+                            selectedCategories.add("ALL");
+                        }
+                    } else {
+                        selectedCategories.add(catName);
+                    }
+                }
+            }
+
+            // 모든 필터 버튼의 활성화(.active) 스타일 동기화
             document.querySelectorAll(".filter-btn").forEach(btn => {
-                const text = btn.innerText.trim();
-                btn.classList.toggle("active", (text === catName) || (catName === 'ALL' && text === '전체보기'));
+                const cat = btn.dataset.category || (btn.innerText.includes("전체보기") ? "ALL" : btn.innerText.trim());
+                const isActive = selectedCategories.has("ALL") ? (cat === "ALL") : selectedCategories.has(cat);
+                btn.classList.toggle("active", isActive);
             });
+
             exitFocusMode();
             applyFilters();
             recalculateAllLayouts();
 
             if (currentLayout !== 'galaxy') {
-                sprites.filter(s => s.visible).forEach(sprite => {
-                    const target = (currentLayout === 'grid') ? sprite.userData.gridPos : sprite.userData.spherePos;
-                    new TWEEN.Tween(sprite.position)
-                        .to({ x: target.x, y: target.y, z: target.z }, 700)
-                        .easing(TWEEN.Easing.Cubic.Out)
-                        .start();
+                sprites.forEach(sprite => {
+                    if (sprite.visible) {
+                        const target = (currentLayout === 'grid') ? sprite.userData.gridPos : sprite.userData.spherePos;
+                        new TWEEN.Tween(sprite.position)
+                            .to({ x: target.x, y: target.y, z: target.z }, 600)
+                            .easing(TWEEN.Easing.Cubic.Out)
+                            .start();
+                    }
                 });
             }
         };
@@ -981,16 +1010,20 @@
 
         function applyFilters() {
             let visibleCount = 0;
+            const isAll = selectedCategories.has("ALL");
+
             sprites.forEach(sprite => {
                 const data = sprite.userData;
-                const matchCat = (currentFilter === "ALL" || data.category === currentFilter);
+                const matchCat = isAll || selectedCategories.has(data.category);
                 const matchSearch = !searchQuery || data.filename.toLowerCase().includes(searchQuery) || data.category.toLowerCase().includes(searchQuery);
 
                 const isVisible = matchCat && matchSearch;
                 sprite.visible = isVisible;
                 if (isVisible) visibleCount++;
             });
-            totalBadge.innerText = `${visibleCount}장 표시 중`;
+
+            const catDesc = isAll ? "전체" : `${selectedCategories.size}개 폴더`;
+            totalBadge.innerText = `${visibleCount}장 (${catDesc})`;
         }
 
         // Raycaster for Hover & Click
