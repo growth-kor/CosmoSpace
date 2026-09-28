@@ -104,13 +104,42 @@ if total_count == 0:
     print(f"[!] 오류: '{BASE_DIR}' 경로에 유효한 이미지가 없습니다.")
     sys.exit(1)
 
-# 캐시 로드
+# 캐시 로드 및 삭제된 파일 캐시/썸네일 자동 청소 (Pruning)
 cache = {}
 if os.path.exists(CACHE_FILE):
     try:
         with open(CACHE_FILE, "rb") as f:
             cache = pickle.load(f)
         print(f"[*] 기존 피처 캐시 {len(cache)}개 항목 로드 완료.")
+        
+        # 현재 실제 존재하는 상대 경로 목록
+        existing_rel_paths = set(item["rel_path"] for item in images_to_process)
+        cached_rel_paths = list(cache.keys())
+        deleted_count = 0
+        
+        for cp in cached_rel_paths:
+            if cp not in existing_rel_paths:
+                # 1. 캐시에서 삭제
+                del cache[cp]
+                deleted_count += 1
+                
+                # 2. 잔존 썸네일 파일 삭제
+                thumb_rel_dir = os.path.join("thumbnails", os.path.dirname(cp))
+                thumb_name = os.path.splitext(os.path.basename(cp))[0] + ".webp"
+                thumb_full_path = os.path.join(BASE_DIR, thumb_rel_dir, thumb_name)
+                if os.path.exists(thumb_full_path):
+                    try:
+                        os.remove(thumb_full_path)
+                    except Exception:
+                        pass
+        
+        if deleted_count > 0:
+            print(f"[*] 🧹 삭제된 사진 {deleted_count}개 감지: 피처 캐시 및 썸네일 정리 완료.")
+            try:
+                with open(CACHE_FILE, "wb") as f:
+                    pickle.dump(cache, f)
+            except Exception as e:
+                print(f"[!] 정리된 캐시 저장 중 오류: {e}")
     except Exception as e:
         print(f"[!] 캐시 파일 읽기 실패 (새로 생성): {e}")
         cache = {}
