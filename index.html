@@ -1474,7 +1474,7 @@
             {
                 tag: "GUIDE 2 / 4",
                 title: "자유로운 회전과 확대",
-                desc: "마우스 왼쪽 버튼을 누른 채 드래그하면 3D 은하를 자유롭게 둘러볼 수 있습니다. 마우스 휠을 돌리거나 키보드의 [ 키(축소)와 ] 키(확대)로 사진들을 시원하게 당겨보고 멀리 조망할 수 있습니다."
+                desc: "마우스 왼쪽 버튼을 누른 채 드래그하면 3D 은하를 자유롭게 둘러볼 수 있습니다. 마우스 휠을 돌리거나 키보드의 - / + 키(또는 대괄호 [ / ] 키)를 눌러 사진들을 시원하게 당겨보고 멀리 조망할 수 있습니다."
             },
             {
                 tag: "GUIDE 3 / 4",
@@ -2284,10 +2284,11 @@
             const delta = Math.min((now - lastTime) / 1000, 0.1);
             lastTime = now;
 
-            // 키보드 WASD 이동 & [ / ] 줌 로직
+            // 키보드 WASD 이동 & [ / ] 또는 - / + 줌 로직
             const isMoving = keysPressed['w'] || keysPressed['a'] || keysPressed['s'] || keysPressed['d'] ||
                 keysPressed['KeyW'] || keysPressed['KeyA'] || keysPressed['KeyS'] || keysPressed['KeyD'] ||
-                keysPressed['['] || keysPressed[']'] || keysPressed['BracketLeft'] || keysPressed['BracketRight'];
+                keysPressed['['] || keysPressed[']'] || keysPressed['BracketLeft'] || keysPressed['BracketRight'] ||
+                keysPressed['-'] || keysPressed['='] || keysPressed['+'] || keysPressed['Minus'] || keysPressed['Equal'];
 
             if (isMoving) {
                 // 카메라 거리에 비례하여 이동 속도를 동적으로 스케일링 (멀리 있을 땐 빠르게, 가까이선 정밀하게)
@@ -2319,12 +2320,12 @@
                     if (keysPressed['d'] || keysPressed['KeyD']) moveOffset.addScaledVector(right, moveSpeed);
                 }
 
-                // [ 키: 축소 (Zoom Out / 멀어지기)
-                if (keysPressed['['] || keysPressed['BracketLeft']) {
+                // [ 또는 - 키: 축소 (Zoom Out / 멀어지기)
+                if (keysPressed['['] || keysPressed['BracketLeft'] || keysPressed['-'] || keysPressed['Minus']) {
                     moveOffset.addScaledVector(forward, -zoomSpeed);
                 }
-                // ] 키: 확대 (Zoom In / 당겨보기)
-                if (keysPressed[']'] || keysPressed['BracketRight']) {
+                // ] 또는 +/= 키: 확대 (Zoom In / 당겨보기)
+                if (keysPressed[']'] || keysPressed['BracketRight'] || keysPressed['='] || keysPressed['+'] || keysPressed['Equal']) {
                     if (distToTarget > 25 || forward.dot(moveOffset) < 0) {
                         moveOffset.addScaledVector(forward, zoomSpeed);
                     }
