@@ -189,19 +189,8 @@
             user-select: none;
         }
 
-        .filter-btn .dot-toggle {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4px;
-            margin: -4px 0 -4px -4px;
-            cursor: pointer;
-            border-radius: 50%;
-            transition: transform 0.15s ease;
-        }
-
-        .filter-btn .dot-toggle:hover {
-            transform: scale(1.4);
+        .filter-btn * {
+            pointer-events: none;
         }
 
         .filter-btn .dot {
@@ -210,12 +199,6 @@
             border-radius: 50%;
             background: #ffffff;
             transition: all 0.2s ease;
-            box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
-        }
-
-        .filter-btn .cat-label {
-            cursor: pointer;
-            display: inline-block;
         }
 
         .filter-btn:hover {
@@ -235,19 +218,6 @@
 
         .filter-btn.active .dot {
             box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-        }
-
-        /* 🌟 필터에서 꺼진 폴더 (Muted / 숨김) */
-        .filter-btn.muted {
-            opacity: 0.35;
-            background: rgba(255, 255, 255, 0.03);
-            border-color: rgba(255, 255, 255, 0.10);
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .filter-btn.muted .dot {
-            opacity: 0.3;
-            box-shadow: none;
         }
 
         /* --- Controls Toolbar (Top Right) --- */
@@ -923,8 +893,8 @@
         </div>
 
         <div id="filter-bar">
-            <button class="filter-btn active" data-category="ALL" onclick="filterCategory('ALL')" title="전체 은하계 조망으로 복귀">
-                <span class="dot" style="background:#ffffff;"></span><span class="cat-label">전체보기</span>
+            <button class="filter-btn active" data-category="ALL" onclick="filterCategory('ALL')">
+                <span class="dot" style="background:#ffffff;"></span>전체보기
             </button>
         </div>
     </div>
@@ -1304,8 +1274,8 @@
             // 필터 버튼 초기화 (전체보기만 남김)
             const filterBar = document.getElementById("filter-bar");
             filterBar.innerHTML = `
-                <button class="filter-btn active" data-category="ALL" onclick="filterCategory('ALL')" title="전체 은하계 조망으로 복귀">
-                    <span class="dot" style="background:#818cf8;"></span><span class="cat-label">전체보기</span>
+                <button class="filter-btn active" data-category="ALL" onclick="filterCategory('ALL')">
+                    <span class="dot" style="background:#818cf8;"></span>전체보기
                 </button>
             `;
             searchQuery = "";
@@ -1464,15 +1434,11 @@
             const filterBar = document.getElementById("filter-bar");
             categories.forEach(cat => {
                 const btn = document.createElement("button");
-                btn.className = "filter-btn active";
+                btn.className = "filter-btn";
                 btn.dataset.category = cat;
                 const color = getCategoryColor(cat);
-                btn.innerHTML = `
-                    <span class="dot-toggle" title="클릭: 사진 표시/숨김 토글 (시점 유지)" onclick="toggleCategoryFilter('${cat}', event)">
-                        <span class="dot" style="background:${color};"></span>
-                    </span>
-                    <span class="cat-label" title="클릭: 이 행성 중심으로 카메라 이동" onclick="warpToPlanet('${cat}', event)">${cat}</span>
-                `;
+                btn.innerHTML = `<span class="dot" style="background:${color};"></span>${cat}`;
+                btn.onclick = () => filterCategory(cat);
                 filterBar.appendChild(btn);
             });
 
@@ -2294,77 +2260,80 @@
             clearPlanetHoverSpotlight();
         });
 
-        // 🌟 [이벤트 위임 클릭 엔진]: 인라인 핸들러 누락 원천 방지 (버튼 어디를 누르든 100% 워프 발동)
-        filterBarEl.addEventListener("click", (e) => {
-            const btn = e.target.closest(".filter-btn");
-            if (!btn) return;
-            const cat = btn.dataset.category;
-            if (!cat) return;
+        let activeCameraTween = null;
+        let activeTargetTween = null;
 
-            if (e.target.closest(".dot-toggle")) {
-                // 컬러 도트 클릭 시: 카메라 이동 0% 필터 온/오프만 토글
-                toggleCategoryFilter(cat, e);
-            } else {
-                // 버튼 전체 또는 텍스트 클릭 시: 해당 행성 중심 1회성 워프!
-                if (cat === "ALL") {
-                    filterCategory("ALL");
-                } else {
-                    warpToPlanet(cat, e);
-                }
-            }
-        });
+        // 🪐 [행성 중심 카메라 워프 엔진]: 실제 galaxySpread 배율이 반영된 물리적 좌표로 1회성 정밀 안착
+        function warpToPlanetCenter(catName) {
+            const meta = planetMetaMap.get(catName);
+            if (!meta) return;
 
-        // 🌟 필터 버튼 시각적 상태(active/muted) 동기화
-        function syncFilterButtons(focusedCat = null) {
-            const isAll = selectedCategories.has("ALL");
-            document.querySelectorAll(".filter-btn").forEach(btn => {
-                const cat = btn.dataset.category;
-                if (!cat) return;
-                if (cat === "ALL") {
-                    btn.classList.toggle("active", isAll && !focusedCat);
-                    btn.classList.toggle("muted", false);
-                } else {
-                    const isIncluded = isAll || selectedCategories.has(cat);
-                    const isActive = focusedCat ? (cat === focusedCat) : (!isAll && selectedCategories.has(cat));
-                    btn.classList.toggle("active", isActive);
-                    btn.classList.toggle("muted", !isIncluded);
-                }
-            });
+            // 실제 씬에서 팽창된 은하계 위치(galaxySpread)를 반영한 중심과 반지름
+            const actualCenter = meta.center.clone().multiplyScalar(galaxySpread);
+            const actualRadius = meta.radius * galaxySpread;
+
+            // 현재 카메라 위치에서 행성 중심을 향하는 방향 벡터
+            const camDir = new THREE.Vector3().subVectors(camera.position, actualCenter);
+            if (camDir.length() < 1e-4) camDir.set(0, 0.35, 1);
+            camDir.normalize();
+
+            // 행성 앞 최적의 관측 거리 (반지름의 2.2배)
+            const safeDistance = Math.max(actualRadius * 2.2, 220);
+            const targetCamPos = actualCenter.clone().addScaledVector(camDir, safeDistance);
+            targetCamPos.y = actualCenter.y + Math.max(actualRadius * 0.3, 30);
+
+            if (activeCameraTween) activeCameraTween.stop();
+            if (activeTargetTween) activeTargetTween.stop();
+
+            activeCameraTween = new TWEEN.Tween(camera.position)
+                .to({ x: targetCamPos.x, y: targetCamPos.y, z: targetCamPos.z }, 850)
+                .easing(TWEEN.Easing.Cubic.InOut)
+                .start();
+
+            activeTargetTween = new TWEEN.Tween(controls.target)
+                .to({ x: actualCenter.x, y: actualCenter.y, z: actualCenter.z }, 850)
+                .easing(TWEEN.Easing.Cubic.InOut)
+                .start();
         }
 
-        // 🌟 1. [카메라 0% 이동] 도트 클릭: 사진 표시/숨김 토글만 조용히 수행 (시점 완전 불변)
-        window.toggleCategoryFilter = function (catName, event) {
-            if (event) event.stopPropagation();
+        // 🌟 [다중 선택(중복 선택) + 스마트 워프 통합 필터 엔진]
+        window.filterCategory = function (catName) {
             if (spotlightClearTimer) clearTimeout(spotlightClearTimer);
             activeHoveredCategory = null;
 
-            if (selectedCategories.has("ALL")) {
-                // 전체보기 상태에서 특정 폴더를 끄면: 해당 폴더를 제외한 모든 폴더를 담음
+            let isNewlyActivated = false; // 이번 클릭으로 폴더가 새로 켜졌는지 여부
+
+            if (catName === "ALL") {
                 selectedCategories.clear();
-                categories.forEach(c => {
-                    if (c !== catName) selectedCategories.add(c);
-                });
-                if (selectedCategories.size === 0) {
-                    selectedCategories.add("ALL");
-                }
+                selectedCategories.add("ALL");
             } else {
-                if (selectedCategories.has(catName)) {
-                    // 이미 켜져 있으면 끔
-                    selectedCategories.delete(catName);
-                    if (selectedCategories.size === 0) {
-                        selectedCategories.add("ALL");
-                    }
-                } else {
-                    // 꺼져 있으면 켬
+                if (selectedCategories.has("ALL")) {
+                    // 전체보기 상태에서 특정 폴더를 클릭하면: 해당 폴더 1개만 우선 선택
+                    selectedCategories.clear();
                     selectedCategories.add(catName);
-                    if (selectedCategories.size >= categories.size) {
-                        selectedCategories.clear();
-                        selectedCategories.add("ALL");
+                    isNewlyActivated = true; // 새로 켜짐! -> 워프!
+                } else {
+                    // 다중 선택 토글 (이미 선택되어 있으면 해제, 없으면 추가)
+                    if (selectedCategories.has(catName)) {
+                        selectedCategories.delete(catName);
+                        isNewlyActivated = false; // 끄는 동작! -> 카메라 절대 이동 안 함!
+                        if (selectedCategories.size === 0) {
+                            selectedCategories.add("ALL");
+                        }
+                    } else {
+                        selectedCategories.add(catName);
+                        isNewlyActivated = true; // 새로 추가(중복 선택)! -> 해당 행성으로 워프!
                     }
                 }
             }
 
-            syncFilterButtons();
+            // 모든 필터 버튼 시각 상태(Active / Inactive) 완벽 동기화
+            document.querySelectorAll(".filter-btn").forEach(btn => {
+                const cat = btn.dataset.category || (btn.innerText.includes("전체보기") ? "ALL" : btn.innerText.trim());
+                const isActive = selectedCategories.has("ALL") ? (cat === "ALL") : selectedCategories.has(cat);
+                btn.classList.toggle("active", isActive);
+            });
+
             exitFocusMode();
             applyFilters();
             recalculateAllLayouts();
@@ -2374,82 +2343,16 @@
                 const cat = lbl.userData.category;
                 lbl.visible = (currentLayout === 'galaxy') && (selectedCategories.has("ALL") || selectedCategories.has(cat));
             });
-        };
 
-        let activeCameraTween = null;
-        let activeTargetTween = null;
-
-        // 🌟 2. [행성 중심 1회성 워프] 폴더명 또는 버튼 클릭: 그 행성 앞으로 비행하여 회전 중심축(controls.target) 안착
-        window.warpToPlanet = function (catName, event) {
-            if (event) event.stopPropagation();
-            if (spotlightClearTimer) clearTimeout(spotlightClearTimer);
-            activeHoveredCategory = null;
-
-            // 만약 해당 폴더가 필터에서 꺼져 있었다면 사용자 편의를 위해 자동으로 켜줌
-            if (!selectedCategories.has("ALL") && !selectedCategories.has(catName)) {
-                selectedCategories.add(catName);
-                applyFilters();
-                recalculateAllLayouts();
-                planetLabels.forEach(lbl => {
-                    const cat = lbl.userData.category;
-                    lbl.visible = (currentLayout === 'galaxy') && (selectedCategories.has("ALL") || selectedCategories.has(cat));
-                });
-            }
-
-            // 버튼 시각 상태: 워프한 행성 버튼을 완전 선명한 Active 하이라이트로 전환
-            syncFilterButtons(catName);
-
-            exitFocusMode();
-
+            // 🚀 카메라 이동 인터랙션
             if (currentLayout === 'galaxy') {
-                const meta = planetMetaMap.get(catName);
-                if (meta) {
-                    // 현재 카메라 위치에서 행성 중심을 향하는 방향 벡터를 기반으로 최적의 관측 위치 산출
-                    const camDir = new THREE.Vector3().subVectors(camera.position, meta.center);
-                    if (camDir.length() < 1e-4) camDir.set(0, 0.35, 1);
-                    camDir.normalize();
-
-                    const safeDistance = Math.max(meta.radius * 2.2, 180);
-                    const targetCamPos = meta.center.clone().addScaledVector(camDir, safeDistance);
-                    targetCamPos.y = meta.center.y + Math.max(meta.radius * 0.3, 25);
-
-                    if (activeCameraTween) activeCameraTween.stop();
-                    if (activeTargetTween) activeTargetTween.stop();
-
-                    activeCameraTween = new TWEEN.Tween(camera.position)
-                        .to({ x: targetCamPos.x, y: targetCamPos.y, z: targetCamPos.z }, 850)
-                        .easing(TWEEN.Easing.Cubic.InOut)
-                        .start();
-
-                    activeTargetTween = new TWEEN.Tween(controls.target)
-                        .to({ x: meta.center.x, y: meta.center.y, z: meta.center.z }, 850)
-                        .easing(TWEEN.Easing.Cubic.InOut)
-                        .start();
+                if (catName === "ALL") {
+                    // [전체보기] 클릭 시 은하계 전체 중심 (0,0,0) 조망으로 스무스하게 복귀!
+                    resetCameraView();
+                } else if (isNewlyActivated) {
+                    // 🪐 새로 켜질 때(선택/중복추가)만 해당 행성 구체 앞으로 카메라 워프 & 회전축 안착! (끌 때는 절대 이동 안 함!)
+                    warpToPlanetCenter(catName);
                 }
-            }
-        };
-
-        // 🌟 3. [전체보기 및 복귀] filterCategory: 'ALL' 클릭 시 전체 은하 조망 시점 복귀
-        window.filterCategory = function (catName) {
-            if (spotlightClearTimer) clearTimeout(spotlightClearTimer);
-            activeHoveredCategory = null;
-
-            if (catName === "ALL") {
-                selectedCategories.clear();
-                selectedCategories.add("ALL");
-                syncFilterButtons();
-                exitFocusMode();
-                applyFilters();
-                recalculateAllLayouts();
-
-                planetLabels.forEach(lbl => {
-                    lbl.visible = (currentLayout === 'galaxy');
-                });
-
-                // 은하계 전체 중심 (0,0,0) 조망으로 스무스하게 복귀!
-                resetCameraView();
-            } else {
-                warpToPlanet(catName);
             }
         };
 
