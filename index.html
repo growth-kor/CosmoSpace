@@ -721,6 +721,45 @@
             margin-bottom: 20px;
         }
 
+        .guide-sponsor-wrap {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+        }
+
+        .guide-sponsor-img {
+            width: 72px;
+            height: 72px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+            flex-shrink: 0;
+        }
+
+        .guide-sponsor-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .guide-sponsor-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .guide-sponsor-sub {
+            font-size: 12px;
+            line-height: 1.4;
+            color: #94a3b8;
+        }
+
         .guide-footer {
             display: flex;
             align-items: center;
@@ -859,6 +898,12 @@
                 <input type="range" id="rotate-speed-slider" min="0.1" max="3.0" step="0.1" value="0.5">
                 <span id="rotate-speed-val" class="val-badge">0.5x</span>
             </div>
+            <!-- 마스터 볼륨 조절 슬라이더 -->
+            <div class="slider-item" id="volume-item">
+                <span>사운드:</span>
+                <input type="range" id="volume-slider" min="0" max="100" step="5" value="65">
+                <span id="volume-val" class="val-badge">65%</span>
+            </div>
         </div>
 
         <!-- Layout Mode Buttons (Bottom) -->
@@ -868,6 +913,7 @@
             <button id="btn-mode-grid" class="tool-btn" onclick="switchLayout('grid')">격자 펼침</button>
             <button class="tool-btn" onclick="resetCameraView()">조망</button>
             <button id="btn-rotate" class="tool-btn" onclick="toggleAutoRotate()">회전</button>
+            <button id="btn-sound" class="tool-btn" onclick="toggleMuteAudio()">소리 켜짐</button>
             <button class="tool-btn" onclick="openGuideModal(0)" title="사용 가이드 열기" style="padding:9px 12px; font-size:14px;">?</button>
         </div>
     </div>
@@ -912,8 +958,9 @@
     <div id="guide-modal" onclick="closeGuideModal()">
         <div class="guide-box" onclick="event.stopPropagation()">
             <button class="guide-close" onclick="closeGuideModal()">&times;</button>
-            <div id="guide-step-tag" class="guide-step-tag">GUIDE 1 / 4</div>
+            <div id="guide-step-tag" class="guide-step-tag">GUIDE 1 / 5</div>
             <div id="guide-title" class="guide-title">폴더 열기 및 드롭</div>
+            <div id="guide-sponsor-slot" style="display:none;"></div>
             <div id="guide-desc" class="guide-desc">
                 좌측 상단의 [폴더 열기] 버튼을 누르거나 컴퓨터의 사진 폴더를 화면 어디든 드래그 앤 드롭하면 사진들이 3D 우주 은하로 즉시 펼쳐집니다.
             </div>
@@ -923,6 +970,7 @@
                     <div class="guide-dot" onclick="showGuideStep(1)"></div>
                     <div class="guide-dot" onclick="showGuideStep(2)"></div>
                     <div class="guide-dot" onclick="showGuideStep(3)"></div>
+                    <div class="guide-dot" onclick="showGuideStep(4)"></div>
                 </div>
                 <div class="guide-nav-btns">
                     <button id="btn-guide-prev" class="btn-guide-nav" onclick="prevGuideStep()" style="display:none;">이전</button>
@@ -1120,6 +1168,9 @@
         const rotateSpeedSlider = document.getElementById("rotate-speed-slider");
         const rotateSpeedVal = document.getElementById("rotate-speed-val");
         const btnRotate = document.getElementById("btn-rotate");
+        const volumeSlider = document.getElementById("volume-slider");
+        const volumeVal = document.getElementById("volume-val");
+        const btnSound = document.getElementById("btn-sound");
 
         // 🌟 100% 브라우저 순수 클라이언트 은하 데이터 구축 및 렌더러
         // 🪐 행성 구체 메타데이터 & 3D 네온 라벨 보관소
@@ -1581,27 +1632,79 @@
             }
         });
 
-        // 온보딩 간단 사용 가이드 (텍스트 슬라이드 카드)
+        // 🎵 [CosmoSpace 사운드 시스템]: 클릭 효과음 & 영역전개 오디오 & 마스터 볼륨 통합 관리
+        let masterVolume = 0.65;
+        let isAudioMuted = false;
+
+        // 1. 클릭 효과음 풀 (연타 시 딜레이 없는 즉시 재생)
+        const clickAudioPool = [
+            new Audio("click.mp3"),
+            new Audio("click.mp3"),
+            new Audio("click.mp3"),
+            new Audio("click.mp3")
+        ];
+        let clickPoolIdx = 0;
+
+        function playClickSound() {
+            if (isAudioMuted || masterVolume <= 0.001) return;
+            const snd = clickAudioPool[clickPoolIdx];
+            clickPoolIdx = (clickPoolIdx + 1) % clickAudioPool.length;
+            snd.volume = Math.min(1.0, masterVolume * 1.1); // 클릭음 선명도 확보
+            snd.currentTime = 0;
+            snd.play().catch(() => {});
+        }
+
+        // 모든 인터랙티브 버튼에 클릭 사운드 자동 바인딩
+        window.addEventListener("click", (e) => {
+            const btn = e.target.closest("button, .btn-tool-action, .filter-btn, .tool-btn, .guide-dot, a.btn-full-view");
+            if (btn) {
+                playClickSound();
+            }
+        }, true);
+
+        // 2. 고조 사토루 영역전개 오디오
+        const domainAudio = new Audio("Gojo Satoru's Domain Expansion Sound.mp3");
+        domainAudio.preload = "auto";
+
+        function playDomainSound() {
+            if (isAudioMuted || masterVolume <= 0.001) return;
+            domainAudio.volume = masterVolume;
+            domainAudio.currentTime = 0;
+            domainAudio.play().catch(() => {});
+        }
+
+        function stopDomainSound() {
+            domainAudio.pause();
+            domainAudio.currentTime = 0;
+        }
+
+        // 온보딩 가이드 5단계 데이터
         const GUIDE_STEPS = [
             {
-                tag: "GUIDE 1 / 4",
+                tag: "GUIDE 1 / 5",
                 title: "폴더 열기 및 드롭",
-                desc: "좌측 상단의 [폴더 열기] 버튼을 누르거나 내 컴퓨터의 사진 폴더를 화면 어디든 끌어다 놓으세요. 수천 장의 사진도 컴퓨터 멈춤 없이 3D 우주 은하로 즉시 펼쳐집니다."
+                desc: "좌측 상단의 [폴더 열기] 버튼을 누르거나 컴퓨터의 사진 폴더를 화면 어디든 끌어다 놓으세요. 수천 장의 사진도 컴퓨터 멈춤 없이 3D 우주 은하로 즉시 펼쳐집니다."
             },
             {
-                tag: "GUIDE 2 / 4",
+                tag: "GUIDE 2 / 5",
                 title: "자유로운 회전과 확대",
                 desc: "마우스 왼쪽 버튼을 누른 채 드래그하면 3D 은하를 자유롭게 둘러볼 수 있습니다. 마우스 휠을 돌리거나 키보드의 - / + 키(또는 대괄호 [ / ] 키)를 눌러 사진들을 시원하게 당겨보고 멀리 조망할 수 있습니다."
             },
             {
-                tag: "GUIDE 3 / 4",
+                tag: "GUIDE 3 / 5",
                 title: "폴더 바로가기 및 키보드 이동",
                 desc: "좌측 하단의 폴더 이름을 클릭하면 해당 폴더 사진들이 모여있는 곳으로 카메라가 부드럽게 날아가 정면으로 보여줍니다. W, A, S, D 키를 누르면 사진들 사이를 비행하며 탐색할 수 있습니다."
             },
             {
-                tag: "GUIDE 4 / 4",
+                tag: "GUIDE 4 / 5",
                 title: "초고화질 확대 및 이미지 복사",
                 desc: "사진을 더블 클릭하면 즉시 최고 화질 원본으로 크게 확대됩니다. [이미지 복사] 버튼을 누르면 사진이 클립보드에 바로 복사되어 카카오톡이나 문서에 곧바로 붙여넣기(Cmd+V)할 수 있습니다."
+            },
+            {
+                tag: "SPECIAL SPONSOR 5 / 5",
+                title: "개발 지원: 고조고 (Gozogo)",
+                isSponsor: true,
+                desc: "GitHub 오픈소스 프로젝트 고조고(Gozogo)의 무량공처 영역전개 데이터 후원으로 개발되었습니다. 우주 공간의 무한한 사진 은하를 지금 자유롭게 탐험해보세요!"
             }
         ];
 
@@ -1610,6 +1713,7 @@
         const guideStepTag = document.getElementById("guide-step-tag");
         const guideTitle = document.getElementById("guide-title");
         const guideDesc = document.getElementById("guide-desc");
+        const guideSponsorSlot = document.getElementById("guide-sponsor-slot");
         const btnGuidePrev = document.getElementById("btn-guide-prev");
         const btnGuideNext = document.getElementById("btn-guide-next");
         const guideDots = document.querySelectorAll(".guide-dot");
@@ -1621,13 +1725,32 @@
             guideTitle.innerText = step.title;
             guideDesc.innerText = step.desc;
 
+            // 5번째 스폰서 카드 처리 및 사운드 트리거
+            if (step.isSponsor) {
+                guideSponsorSlot.style.display = "block";
+                guideSponsorSlot.innerHTML = `
+                    <div class="guide-sponsor-wrap">
+                        <img src="gozogo4.png" alt="고조고 스폰서" class="guide-sponsor-img">
+                        <div class="guide-sponsor-text">
+                            <div class="guide-sponsor-title">Gozogo Code Sponsorship</div>
+                            <div class="guide-sponsor-sub">Special Open-Source Contributor<br>Official 3D Expansion Engine</div>
+                        </div>
+                    </div>
+                `;
+                playDomainSound();
+            } else {
+                guideSponsorSlot.style.display = "none";
+                guideSponsorSlot.innerHTML = "";
+                stopDomainSound();
+            }
+
             guideDots.forEach((d, i) => {
                 d.classList.toggle("active", i === currentGuideIdx);
             });
 
             btnGuidePrev.style.display = currentGuideIdx === 0 ? "none" : "block";
             if (currentGuideIdx === GUIDE_STEPS.length - 1) {
-                btnGuideNext.innerText = "시작하기";
+                btnGuideNext.innerText = "은하계 입장하기";
             } else {
                 btnGuideNext.innerText = "다음";
             }
@@ -1653,8 +1776,9 @@
         }
 
         function closeGuideModal() {
+            stopDomainSound();
             guideModal.style.display = "none";
-            localStorage.setItem("pinter_guide_seen", "true");
+            localStorage.setItem("cosmo_guide_seen", "true");
         }
 
         // 초기 시작: galaxy_data.json이 있으면 기본 로드, 없으면 안내 가이드 오픈
@@ -1913,8 +2037,36 @@
             rotateSpeedVal.innerText = `${v.toFixed(1)}x`;
         });
 
+        // 5. Master Volume Slider (0% ~ 100%)
+        volumeSlider.addEventListener("input", (e) => {
+            const v = parseInt(e.target.value);
+            masterVolume = v / 100.0;
+            volumeVal.innerText = `${v}%`;
+            if (domainAudio) domainAudio.volume = masterVolume;
+            if (isAudioMuted && v > 0) {
+                isAudioMuted = false;
+                btnSound.innerText = "소리 켜짐";
+                btnSound.classList.remove("active-mode");
+            }
+        });
+
+        window.toggleMuteAudio = function () {
+            isAudioMuted = !isAudioMuted;
+            if (isAudioMuted) {
+                if (domainAudio) domainAudio.pause();
+                btnSound.innerText = "음소거";
+                btnSound.classList.add("active-mode");
+            } else {
+                btnSound.innerText = "소리 켜짐";
+                btnSound.classList.remove("active-mode");
+                if (currentGuideIdx === 4 && guideModal.style.display !== "none") {
+                    playDomainSound();
+                }
+            }
+        };
+
         // 슬라이더 조작 완료(마우스/터치 해제 및 값 확정) 즉시 포커스 자동 해제하여 WASD 키보드 입력 복원
-        [spreadSlider, sizeSlider, dimSlider, rotateSpeedSlider].forEach(slider => {
+        [spreadSlider, sizeSlider, dimSlider, rotateSpeedSlider, volumeSlider].forEach(slider => {
             slider.addEventListener("change", () => slider.blur());
             slider.addEventListener("pointerup", () => slider.blur());
         });
