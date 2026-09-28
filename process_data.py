@@ -218,12 +218,12 @@ if n_samples >= 15:
     pca = PCA(n_components=pca_dims, random_state=42)
     features_pca = pca.fit_transform(features)
     
-    # UMAP 3D 차원 축소
+    # UMAP 3D 차원 축소 (min_dist를 0.6으로 높여 노드 간 충돌/겹침 완화)
     n_neighbors = min(15, n_samples - 1)
-    reducer = umap.UMAP(n_components=3, random_state=42, n_neighbors=n_neighbors, min_dist=0.1)
+    reducer = umap.UMAP(n_components=3, random_state=42, n_neighbors=n_neighbors, min_dist=0.6, spread=1.2)
     coords_3d = reducer.fit_transform(features_pca)
 elif n_samples >= 4:
-    reducer = umap.UMAP(n_components=3, random_state=42, n_neighbors=n_samples - 1, min_dist=0.1)
+    reducer = umap.UMAP(n_components=3, random_state=42, n_neighbors=n_samples - 1, min_dist=0.6, spread=1.2)
     coords_3d = reducer.fit_transform(features)
 else:
     coords_3d = np.random.uniform(-50, 50, (n_samples, 3))

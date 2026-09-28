@@ -13,8 +13,8 @@
             --bg-base: #07090e;
             --accent-primary: #6366f1;
             --accent-glow: rgba(99, 102, 241, 0.4);
-            --surface-glass: rgba(15, 18, 28, 0.78);
-            --border-glass: rgba(255, 255, 255, 0.12);
+            --surface-glass: rgba(15, 18, 28, 0.82);
+            --border-glass: rgba(255, 255, 255, 0.14);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
         }
@@ -52,8 +52,8 @@
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border-glass);
             border-radius: 18px;
-            padding: 20px 22px;
-            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.1);
+            padding: 18px 22px;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.12);
             transition: opacity 0.3s ease;
         }
 
@@ -82,14 +82,14 @@
             font-weight: 700;
             padding: 3px 9px;
             border-radius: 12px;
-            background: rgba(99, 102, 241, 0.18);
-            border: 1px solid rgba(99, 102, 241, 0.35);
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.4);
             color: #c7d2fe;
         }
 
         .sub-desc {
-            margin: 0 0 14px 0;
-            font-size: 12.5px;
+            margin: 0 0 12px 0;
+            font-size: 12px;
             color: var(--text-muted);
             line-height: 1.4;
         }
@@ -104,7 +104,7 @@
             width: 100%;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 9px 14px 9px 34px;
+            padding: 8px 14px 8px 34px;
             border-radius: 10px;
             color: #fff;
             font-size: 13px;
@@ -134,7 +134,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
-            max-height: 140px;
+            max-height: 130px;
             overflow-y: auto;
             padding-right: 4px;
         }
@@ -154,7 +154,7 @@
             color: #cbd5e1;
             padding: 4px 10px;
             border-radius: 14px;
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -192,6 +192,8 @@
             z-index: 100;
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .tool-btn {
@@ -199,7 +201,7 @@
             backdrop-filter: blur(16px);
             border: 1px solid var(--border-glass);
             color: #fff;
-            padding: 8px 14px;
+            padding: 8px 13px;
             border-radius: 12px;
             font-size: 12px;
             font-weight: 600;
@@ -212,9 +214,37 @@
         }
 
         .tool-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.18);
             border-color: rgba(255, 255, 255, 0.3);
             transform: translateY(-1px);
+        }
+
+        .tool-btn.active-mode {
+            background: #4f46e5;
+            border-color: #818cf8;
+            box-shadow: 0 0 14px var(--accent-glow);
+        }
+
+        /* Focus Mode Status Bar */
+        #focus-banner {
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(99, 102, 241, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid #818cf8;
+            padding: 7px 18px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
         }
 
         /* Loading Overlay */
@@ -234,13 +264,13 @@
         }
 
         .spinner-ring {
-            width: 54px;
-            height: 54px;
+            width: 50px;
+            height: 50px;
             border: 4px solid rgba(99, 102, 241, 0.2);
             border-top-color: #818cf8;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         @keyframes spin {
@@ -248,7 +278,7 @@
         }
 
         #loading-text {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             color: #fff;
             margin-bottom: 10px;
@@ -304,8 +334,8 @@
         .preview-img-container {
             position: relative;
             width: 100%;
-            max-height: 300px;
-            background: rgba(0, 0, 0, 0.4);
+            max-height: 280px;
+            background: rgba(0, 0, 0, 0.5);
             border-radius: 12px;
             overflow: hidden;
             display: flex;
@@ -316,7 +346,7 @@
 
         #preview-img {
             max-width: 100%;
-            max-height: 300px;
+            max-height: 280px;
             object-fit: contain;
             border-radius: 8px;
         }
@@ -410,13 +440,19 @@
         <div id="progress-sub">0 / 0 (0%)</div>
     </div>
 
+    <!-- Focus Mode Banner -->
+    <div id="focus-banner" onclick="exitFocusMode()">
+        <span>🎯 포커스 모드 (시야 차폐 방지 중)</span>
+        <span style="opacity: 0.7; font-size: 11px;">[여기를 눌러 해제]</span>
+    </div>
+
     <!-- UI Overlay Header -->
     <div id="ui-overlay">
         <div class="header-title-row">
             <h1>🪐 Pinterest Galaxy</h1>
             <div id="total-count-badge" class="stats-badge">0장</div>
         </div>
-        <p class="sub-desc">클릭하여 초점 이동 · 드래그 & 휠로 은하계 탐색</p>
+        <p class="sub-desc">클릭: 선명한 포커스 (방해물 자동 투명화) · 드래그: 자유 비행</p>
         
         <div class="search-box">
             <span class="search-icon">🔍</span>
@@ -432,6 +468,8 @@
 
     <!-- Controls Bar (Top Right) -->
     <div id="controls-bar">
+        <button id="btn-mode-galaxy" class="tool-btn active-mode" onclick="switchLayout('galaxy')">🌌 은하 군집</button>
+        <button id="btn-mode-grid" class="tool-btn" onclick="switchLayout('grid')">🔲 격자 펼침 (겹침 0%)</button>
         <button class="tool-btn" onclick="resetCameraView()">🔭 전체 조망</button>
         <button class="tool-btn" onclick="toggleAutoRotate()">🔄 자동 회전</button>
     </div>
@@ -471,9 +509,10 @@
         // Three.js Scene Setup
         const container = document.getElementById("canvas-container");
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x07090e, 0.0010);
+        scene.fog = new THREE.FogExp2(0x07090e, 0.0009);
 
-        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 1, 5000);
+        // Near plane set to 3.0 to clip extreme close-up lens occlusion
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 3, 5000);
         const DEFAULT_CAM_POS = new THREE.Vector3(0, 100, 520);
         camera.position.copy(DEFAULT_CAM_POS);
 
@@ -487,7 +526,7 @@
         controls.enableDamping = true;
         controls.dampingFactor = 0.06;
         controls.maxDistance = 2500;
-        controls.minDistance = 10;
+        controls.minDistance = 15;
         controls.autoRotate = false;
         controls.autoRotateSpeed = 0.6;
 
@@ -503,7 +542,7 @@
             color: 0x64748b,
             size: 2,
             transparent: true,
-            opacity: 0.6
+            opacity: 0.5
         });
         const starField = new THREE.Points(starGeo, starMat);
         scene.add(starField);
@@ -513,6 +552,8 @@
         const categories = new Set();
         let currentFilter = "ALL";
         let searchQuery = "";
+        let currentLayout = "galaxy";
+        let focusedSprite = null;
 
         // UI Element References
         const loadingOverlay = document.getElementById("loading-overlay");
@@ -526,6 +567,7 @@
         const previewBadge = document.getElementById("preview-badge");
         const previewRatio = document.getElementById("preview-ratio");
         const previewLink = document.getElementById("preview-link");
+        const focusBanner = document.getElementById("focus-banner");
 
         // Load Galaxy JSON
         fetch("galaxy_data.json")
@@ -548,11 +590,12 @@
                         setTimeout(() => {
                             loadingOverlay.style.opacity = "0";
                             setTimeout(() => loadingOverlay.style.display = "none", 600);
+                            calculateGridLayouts();
                         }, 200);
                     }
                 }
 
-                data.forEach(item => {
+                data.forEach((item, index) => {
                     categories.add(item.category);
                     const catColor = getCategoryColor(item.category);
 
@@ -564,21 +607,34 @@
                             const material = new THREE.SpriteMaterial({
                                 map: texture,
                                 transparent: true,
+                                opacity: 1.0,
                                 depthWrite: false
                             });
                             const sprite = new THREE.Sprite(material);
 
-                            // Maintain original aspect ratio without distortion
+                            // Maintain original aspect ratio with base size
                             const aspect = item.aspect_ratio || 1.0;
-                            const baseSize = 20;
+                            const baseSize = 18;
+                            let sx, sy;
                             if (aspect >= 1.0) {
-                                sprite.scale.set(baseSize * aspect, baseSize, 1);
+                                sx = baseSize * Math.min(aspect, 2.5);
+                                sy = baseSize;
                             } else {
-                                sprite.scale.set(baseSize, baseSize / aspect, 1);
+                                sx = baseSize;
+                                sy = baseSize / Math.max(aspect, 0.4);
                             }
+                            sprite.scale.set(sx, sy, 1);
 
+                            // Store positions
                             sprite.position.set(item.x, item.y, item.z);
-                            sprite.userData = { ...item, originalScale: sprite.scale.clone(), color: catColor };
+                            sprite.userData = {
+                                ...item,
+                                index: index,
+                                originalScale: sprite.scale.clone(),
+                                color: catColor,
+                                galaxyPos: new THREE.Vector3(item.x, item.y, item.z),
+                                gridPos: new THREE.Vector3(0, 0, 0)
+                            };
 
                             scene.add(sprite);
                             sprites.push(sprite);
@@ -586,7 +642,7 @@
                         },
                         undefined,
                         (err) => {
-                            console.warn("텍스처 로드 실패:", thumbUrl, err);
+                            console.warn("텍스처 로드 실패:", thumbUrl);
                             updateProgress();
                         }
                     );
@@ -609,6 +665,47 @@
                 progressSub.innerText = "process_data.py를 먼저 실행해 주세요.";
             });
 
+        // Calculate Clean Non-Overlapping Grid Layout
+        function calculateGridLayouts() {
+            const visibleSprites = sprites.filter(s => s.visible);
+            const count = visibleSprites.length;
+            if (count === 0) return;
+
+            const cols = Math.ceil(Math.sqrt(count * 1.5));
+            const spacingX = 36;
+            const spacingY = 32;
+            const offsetX = ((cols - 1) * spacingX) / 2;
+
+            visibleSprites.forEach((s, idx) => {
+                const col = idx % cols;
+                const row = Math.floor(idx / cols);
+                const x = col * spacingX - offsetX;
+                const y = -row * spacingY + 150;
+                const z = 0;
+                s.userData.gridPos.set(x, y, z);
+            });
+        }
+
+        // Layout Switcher (Galaxy ↔ Grid)
+        window.switchLayout = function(mode) {
+            currentLayout = mode;
+            document.getElementById("btn-mode-galaxy").classList.toggle("active-mode", mode === 'galaxy');
+            document.getElementById("btn-mode-grid").classList.toggle("active-mode", mode === 'grid');
+
+            exitFocusMode();
+            calculateGridLayouts();
+
+            sprites.forEach(sprite => {
+                const targetPos = (mode === 'grid') ? sprite.userData.gridPos : sprite.userData.galaxyPos;
+                new TWEEN.Tween(sprite.position)
+                    .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 1000)
+                    .easing(TWEEN.Easing.Cubic.InOut)
+                    .start();
+            });
+
+            resetCameraView();
+        };
+
         // Filter Logic
         window.filterCategory = function (catName) {
             currentFilter = catName;
@@ -616,13 +713,25 @@
                 const text = btn.innerText.trim();
                 btn.classList.toggle("active", (text === catName) || (catName === 'ALL' && text === '전체보기'));
             });
+            exitFocusMode();
             applyFilters();
+            if (currentLayout === 'grid') {
+                calculateGridLayouts();
+                sprites.filter(s => s.visible).forEach(sprite => {
+                    new TWEEN.Tween(sprite.position)
+                        .to({ x: sprite.userData.gridPos.x, y: sprite.userData.gridPos.y, z: sprite.userData.gridPos.z }, 800)
+                        .easing(TWEEN.Easing.Cubic.Out)
+                        .start();
+                });
+            }
         };
 
         // Instant Search
         searchInput.addEventListener("input", (e) => {
             searchQuery = e.target.value.toLowerCase().trim();
+            exitFocusMode();
             applyFilters();
+            if (currentLayout === 'grid') calculateGridLayouts();
         });
 
         function applyFilters() {
@@ -645,7 +754,7 @@
         let hoveredSprite = null;
 
         window.addEventListener("pointermove", (e) => {
-            if (e.target.closest("#ui-overlay") || e.target.closest("#preview-card") || e.target.closest("#controls-bar")) {
+            if (e.target.closest("#ui-overlay") || e.target.closest("#preview-card") || e.target.closest("#controls-bar") || e.target.closest("#focus-banner")) {
                 document.body.style.cursor = "default";
                 return;
             }
@@ -660,17 +769,17 @@
             if (intersects.length > 0) {
                 const target = intersects[0].object;
                 if (hoveredSprite !== target) {
-                    if (hoveredSprite && hoveredSprite.userData.originalScale) {
+                    if (hoveredSprite && hoveredSprite !== focusedSprite && hoveredSprite.userData.originalScale) {
                         hoveredSprite.scale.copy(hoveredSprite.userData.originalScale);
                     }
                     hoveredSprite = target;
                     if (target.userData.originalScale) {
-                        target.scale.copy(target.userData.originalScale).multiplyScalar(1.25);
+                        target.scale.copy(target.userData.originalScale).multiplyScalar(1.22);
                     }
                 }
                 document.body.style.cursor = "pointer";
             } else {
-                if (hoveredSprite && hoveredSprite.userData.originalScale) {
+                if (hoveredSprite && hoveredSprite !== focusedSprite && hoveredSprite.userData.originalScale) {
                     hoveredSprite.scale.copy(hoveredSprite.userData.originalScale);
                     hoveredSprite = null;
                 }
@@ -678,9 +787,9 @@
             }
         });
 
-        // Click Action -> Focus & Fly to Image
+        // Click Action -> Focus Mode (X-Ray Ghost Mode) & Smart Camera Dolly
         window.addEventListener("click", (e) => {
-            if (e.target.closest("#ui-overlay") || e.target.closest("#preview-card") || e.target.closest("#controls-bar")) return;
+            if (e.target.closest("#ui-overlay") || e.target.closest("#preview-card") || e.target.closest("#controls-bar") || e.target.closest("#focus-banner")) return;
 
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -691,36 +800,83 @@
 
             if (intersects.length > 0) {
                 const target = intersects[0].object;
-                const item = target.userData;
-
-                // Update Preview Card
-                previewImg.src = item.path;
-                previewBadge.innerText = item.category;
-                previewBadge.style.background = item.color || "#6366f1";
-                previewRatio.innerText = `비율: ${item.aspect_ratio || 1.0}`;
-                previewName.innerText = item.filename;
-                previewLink.href = item.path;
-                previewCard.style.display = "block";
-
-                // Smooth Fly-to Animation
-                const targetPos = new THREE.Vector3().copy(target.position).add(new THREE.Vector3(0, 0, 45));
-                new TWEEN.Tween(camera.position)
-                    .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 800)
-                    .easing(TWEEN.Easing.Cubic.Out)
-                    .start();
-
-                new TWEEN.Tween(controls.target)
-                    .to({ x: target.position.x, y: target.position.y, z: target.position.z }, 800)
-                    .easing(TWEEN.Easing.Cubic.Out)
-                    .start();
+                enterFocusMode(target);
             }
         });
 
+        // 🎯 Enter Focus Mode: Isolate target, fade other sprites into ghost mode, smart camera angle
+        function enterFocusMode(target) {
+            focusedSprite = target;
+            const item = target.userData;
+
+            // Show banner & preview card
+            focusBanner.style.display = "flex";
+            previewImg.src = item.path;
+            previewBadge.innerText = item.category;
+            previewBadge.style.background = item.color || "#6366f1";
+            previewRatio.innerText = `비율: ${item.aspect_ratio || 1.0}`;
+            previewName.innerText = item.filename;
+            previewLink.href = item.path;
+            previewCard.style.display = "block";
+
+            // 1. Target: Full Opacity, Top RenderOrder, Scale highlight
+            target.material.opacity = 1.0;
+            target.renderOrder = 999;
+            target.scale.copy(item.originalScale).multiplyScalar(1.2);
+
+            // 2. All other sprites: Fade to Ghost Mode (0.08 Opacity) to guarantee crystal clear view!
+            sprites.forEach(s => {
+                if (s !== target) {
+                    s.renderOrder = 0;
+                    new TWEEN.Tween(s.material)
+                        .to({ opacity: 0.08 }, 300)
+                        .start();
+                    s.scale.copy(s.userData.originalScale);
+                }
+            });
+
+            // 3. Smart Camera Vector: Dolly in along current line of sight with safe standoff distance
+            const camVector = new THREE.Vector3().subVectors(camera.position, target.position);
+            if (camVector.length() < 1e-4) camVector.set(0, 0, 1);
+            camVector.normalize();
+
+            // Safe comfortable viewing distance (prevents clipping through lens)
+            const safeDistance = 65;
+            const targetCamPos = new THREE.Vector3().copy(target.position).addScaledVector(camVector, safeDistance);
+
+            new TWEEN.Tween(camera.position)
+                .to({ x: targetCamPos.x, y: targetCamPos.y, z: targetCamPos.z }, 800)
+                .easing(TWEEN.Easing.Cubic.Out)
+                .start();
+
+            new TWEEN.Tween(controls.target)
+                .to({ x: target.position.x, y: target.position.y, z: target.position.z }, 800)
+                .easing(TWEEN.Easing.Cubic.Out)
+                .start();
+        }
+
+        // Exit Focus Mode -> Restore 100% Opacity to all nodes
+        window.exitFocusMode = function() {
+            focusBanner.style.display = "none";
+            if (focusedSprite) {
+                focusedSprite.renderOrder = 0;
+                focusedSprite.scale.copy(focusedSprite.userData.originalScale);
+                focusedSprite = null;
+            }
+            sprites.forEach(s => {
+                new TWEEN.Tween(s.material)
+                    .to({ opacity: 1.0 }, 400)
+                    .start();
+            });
+        };
+
         window.closePreview = function() {
             previewCard.style.display = "none";
+            exitFocusMode();
         };
 
         window.resetCameraView = function() {
+            exitFocusMode();
             new TWEEN.Tween(camera.position)
                 .to({ x: DEFAULT_CAM_POS.x, y: DEFAULT_CAM_POS.y, z: DEFAULT_CAM_POS.z }, 900)
                 .easing(TWEEN.Easing.Cubic.Out)
