@@ -1115,6 +1115,12 @@
             }
         });
 
+        // 슬라이더 조작 완료(마우스/터치 해제 및 값 확정) 즉시 포커스 자동 해제하여 WASD 키보드 입력 복원
+        [spreadSlider, sizeSlider, dimSlider].forEach(slider => {
+            slider.addEventListener("change", () => slider.blur());
+            slider.addEventListener("pointerup", () => slider.blur());
+        });
+
         // Multi-Select Category Filter Logic
         const selectedCategories = new Set(["ALL"]);
 
@@ -1171,6 +1177,13 @@
             exitFocusMode();
             applyFilters();
             recalculateAllLayouts();
+        });
+
+        // 검색창에서 Enter나 Escape 입력 시 즉시 포커스를 해제(blur)하여 키보드 WASD 네비게이션 복귀
+        searchInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === "Escape") {
+                searchInput.blur();
+            }
         });
 
         function applyFilters() {
@@ -1247,8 +1260,13 @@
             }
         });
 
-        // 빈 배경 1회 클릭 시 포커스 해제 (드래그 회전 시 사진 오작동 방지)
+        // 빈 배경 1회 클릭 시 포커스 해제 (드래그 회전 시 사진 오작동 방지 및 입력창 포커스 자동 반환)
         window.addEventListener("click", (e) => {
+            // 캔버스나 배경을 클릭했을 때 활성화된 input/textarea 포커스를 즉시 해제하여 키보드 WASD 제어권 복원
+            if (!e.target.closest("#ui-overlay") && !e.target.closest("#controls-bar") && document.activeElement && document.activeElement.blur) {
+                document.activeElement.blur();
+            }
+
             if (e.target.closest("#ui-overlay") || e.target.closest("#preview-card") || e.target.closest("#controls-bar") || e.target.closest("#focus-banner")) return;
 
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -1423,6 +1441,13 @@
             modal.style.display = "flex";
         };
 
+        window.closeLightbox = function() {
+            const modal = document.getElementById("lightbox-modal");
+            if (modal) {
+                modal.style.display = "none";
+            }
+        };
+
         window.resetCameraView = function() {
             exitFocusMode();
             let targetPos = DEFAULT_CAM_POS;
@@ -1467,8 +1492,8 @@
         // ⌨️ 키보드 네비게이션: W, A, S, D로 비행 이동 및 [ (축소/Zoom Out), ] (확대/Zoom In)
         const keysPressed = {};
         window.addEventListener("keydown", (e) => {
-            // 입력창(검색창 등)에 포커스가 있을 때는 키보드 단축키 비활성화
-            if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+            // 텍스트 입력창(검색창 등)에 실제 텍스트 포커스가 있을 때만 키보드 이동 비활성화 (슬라이더 등은 영향 없음)
+            if (e.target && (e.target.tagName === "TEXTAREA" || (e.target.tagName === "INPUT" && e.target.type !== "range"))) return;
 
             if (e.key === "Escape") {
                 closeLightbox();
