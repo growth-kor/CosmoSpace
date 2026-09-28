@@ -1002,6 +1002,7 @@
                 const spacingY = Math.max(nodeBaseSize * 1.9, 30) * gridSpacingScale;
                 const fitZ = Math.max(cols * spacingX * 0.9, rows * spacingY * 1.25, 750);
 
+                camera.up.set(0, 1, 0);
                 new TWEEN.Tween(camera.position)
                     .to({ x: 0, y: 0, z: fitZ }, 1000)
                     .easing(TWEEN.Easing.Cubic.InOut)
@@ -1330,8 +1331,26 @@
                     .to({ x: 0, y: 0, z: 0 }, 800)
                     .easing(TWEEN.Easing.Cubic.Out)
                     .start();
+            } else if (currentLayout === 'grid') {
+                // 🔲 격자 모드: 사진 평면과 완벽하게 1:1 수직 정대면(Orthogonal) 정렬!
+                // 목이 돌아가거나 각도가 삐뚤어지지 않도록 시선 중심을 타겟 사진 정중앙(x, y, 0)에 두고 카메라는 (x, y, Z) 수직선상에 정확히 배치!
+                const safeDistance = Math.max(nodeBaseSize * 3.5, 60);
+                const targetCamPos = new THREE.Vector3(target.position.x, target.position.y, safeDistance);
+
+                // 카메라 업 벡터도 정방향 (0, 1, 0) 보정
+                camera.up.set(0, 1, 0);
+
+                new TWEEN.Tween(camera.position)
+                    .to({ x: targetCamPos.x, y: targetCamPos.y, z: targetCamPos.z }, 800)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .start();
+
+                new TWEEN.Tween(controls.target)
+                    .to({ x: target.position.x, y: target.position.y, z: 0 }, 800)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .start();
             } else {
-                // 일반 은하계 / 격자 모드
+                // 🌌 일반 은하계 모드
                 const camVector = new THREE.Vector3().subVectors(camera.position, target.position);
                 if (camVector.length() < 1e-4) camVector.set(0, 0, 1);
                 camVector.normalize();
@@ -1419,9 +1438,13 @@
                 const spacingX = Math.max(nodeBaseSize * 2.2, 34);
                 const spacingY = Math.max(nodeBaseSize * 1.9, 30);
                 const fitZ = Math.max(cols * spacingX * 0.9, rows * spacingY * 1.25, 750);
+                camera.up.set(0, 1, 0);
                 targetPos = new THREE.Vector3(0, 0, fitZ);
             } else if (currentLayout === 'sphere') {
+                camera.up.set(0, 1, 0);
                 targetPos = new THREE.Vector3(0, 80, 900);
+            } else {
+                camera.up.set(0, 1, 0);
             }
 
             new TWEEN.Tween(camera.position)
@@ -1540,6 +1563,14 @@
             // 구체 표면 모드에서는 시선 피벗이 (0,0,0) 중심에서 이탈하지 않도록 락 유지 (단, WASD 이동 없을 때)
             if (currentLayout === 'sphere' && !focusedSprite && !isMoving) {
                 controls.target.set(0, 0, 0);
+            }
+
+            // 🔲 격자 모드에서는 카메라가 비틀거리거나 목이 돌아가지 않도록 직각 정면(Up: 0, 1, 0 & Target.Z = 0) 완벽 고정
+            if (currentLayout === 'grid') {
+                camera.up.set(0, 1, 0);
+                if (!focusedSprite) {
+                    controls.target.z = 0;
+                }
             }
 
             controls.update();
