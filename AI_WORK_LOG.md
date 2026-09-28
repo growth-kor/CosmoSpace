@@ -1,5 +1,19 @@
 # 🪐 Pinterest 3D Galaxy AI 기술 작업 일지
 
+## [7차] 2026-09-28: Mac Finder 실제 폴더 위치 열기 & 앱 내 사진 즉시 바로가기 버튼 탑재
+
+### 1. 주요 변경 내역
+- **[백엔드] Mac Finder 실시간 연동 API 탑재 (`process_data.py`)**:
+  - `GalaxyRequestHandler` 내 `GET /api/reveal?path=...` 엔드포인트 구현.
+  - `subprocess.Popen(["open", "-R", full_path])`를 호출하여 클릭한 사진 파일이 위치한 실제 macOS 폴더를 즉시 열고 해당 파일을 선택(하이라이트) 상태로 활성화.
+- **[프론트엔드] 프리뷰 카드 액션 버튼 2종 추가 (`index.html`)**:
+  - `📁 폴더 위치 열기` 버튼: Mac Finder를 즉시 띄워 실제 로컬 파일이 저장된 폴더 경로를 표시.
+  - `🎯 사진 바로가기` 버튼: 3D 공간을 자유롭게 둘러보거나 카메라가 멀어진 상태에서도 언제든 해당 사진의 정면(안전 거리 70유닛)으로 카메라를 즉시 클로즈업 비행.
+
+### 2. 코드 및 검증 결과
+- `process_data.py`: `GalaxyRequestHandler` 구문 및 `open -R` 파이프라인 검증 완료.
+- `index.html`: `revealInFinder()`, `flyToCurrentPhoto()` API 통신 및 UI 연동 완료.
+
 ## [6차] 2026-09-28: 구체 표면 모드 구 중심 (0,0,0) 시선 고정 및 궤도 회전 제어
 
 ### 1. 주요 변경 내역

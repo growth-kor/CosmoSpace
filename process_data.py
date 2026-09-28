@@ -5,6 +5,7 @@ import threading
 import time
 import webbrowser
 import pickle
+import urllib.parse
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 
 # -------------------------------------------------------------
@@ -250,14 +251,40 @@ with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
 print(f"[+] 은하 데이터 생성 완료: {OUTPUT_FILE} (총 {len(output_data)}개)")
 
 # -------------------------------------------------------------
-# 5. 멀티스레드 웹 서버 시작 (포트 충돌 방지 및 브라우저 오픈)
+# 5. 멀티스레드 웹 서버 시작 (Finder 연동 API 탑재 및 브라우저 오픈)
 # -------------------------------------------------------------
 print("\n[단계 4/4] 멀티스레드 로컬 웹 서버 시작 및 뷰어 오픈...")
+
+class GalaxyRequestHandler(SimpleHTTPRequestHandler):
+    def do_GET(self):
+        parsed = urllib.parse.urlparse(self.path)
+        # 📂 Mac Finder에서 실제 사진 파일 위치 열기 API
+        if parsed.path == "/api/reveal":
+            qs = urllib.parse.parse_qs(parsed.query)
+            file_rel_path = qs.get("path", [""])[0]
+            if file_rel_path:
+                full_path = os.path.abspath(os.path.join(CURRENT_DIR, file_rel_path))
+                if os.path.exists(full_path):
+                    # macOS Finder에서 해당 파일 선택 상태로 폴더 열기
+                    subprocess.Popen(["open", "-R", full_path])
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(b'{"status": "ok"}')
+                    return
+                else:
+                    self.send_response(404)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write(b'{"status": "error", "message": "File not found"}')
+                    return
+        return super().do_GET()
 
 def find_available_port(start_port=8000, max_port=8020):
     for p in range(start_port, max_port):
         try:
-            server = ThreadingHTTPServer(('', p), SimpleHTTPRequestHandler)
+            server = ThreadingHTTPServer(('', p), GalaxyRequestHandler)
             return server, p
         except OSError:
             continue
