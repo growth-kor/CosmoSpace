@@ -1038,7 +1038,50 @@
         scene.add(starField);
 
         const textureLoader = new THREE.TextureLoader();
-        const highResTextureCache = new Map(); // 원본 고화질 텍스처 전용 초고속 LRU 캐시
+        // 🌟 [LRU-10 VRAM 보호 엔진]: 최대 10장만 고화질 원본 유지, 초과 시 가장 오래된 텍스처 GPU dispose & 썸네일 롤백
+        const MAX_HIGH_RES_CACHE = 10;
+        const highResTextureCache = new Map(); // key: path/url -> { texture, sprite, isBlobUrl }
+
+        function evictOldestHighResTexture() {
+            if (highResTextureCache.size <= MAX_HIGH_RES_CACHE) return;
+            const oldestKey = highResTextureCache.keys().next().value;
+            const entry = highResTextureCache.get(oldestKey);
+            highResTextureCache.delete(oldestKey);
+
+            if (entry) {
+                // 1. 해당 스프라이트가 현재 포커스된 대상이 아니면 원래의 경량 썸네일로 롤백
+                if (entry.sprite && entry.sprite !== focusedSprite && entry.sprite.userData && entry.sprite.userData.thumbTexture) {
+                    entry.sprite.material.map = entry.sprite.userData.thumbTexture;
+                    entry.sprite.material.needsUpdate = true;
+                }
+                // 2. 비디오 메모리(GPU VRAM)에서 고해상도 텍스처 완전 해제
+                if (entry.texture) {
+                    entry.texture.dispose();
+                }
+                // 3. 브라우저 임시 Blob URL 해제하여 시스템 RAM 반환
+                if (entry.isBlobUrl && oldestKey.startsWith("blob:")) {
+                    try { URL.revokeObjectURL(oldestKey); } catch (e) { }
+                    if (entry.sprite && entry.sprite.userData) {
+                        entry.sprite.userData.fullResUrl = null;
+                    }
+                }
+            }
+        }
+
+        function clearAllHighResTextures() {
+            highResTextureCache.forEach((entry, key) => {
+                if (entry.sprite && entry.sprite.userData && entry.sprite.userData.thumbTexture) {
+                    entry.sprite.material.map = entry.sprite.userData.thumbTexture;
+                    entry.sprite.material.needsUpdate = true;
+                }
+                if (entry.texture) entry.texture.dispose();
+                if (entry.isBlobUrl && key.startsWith("blob:")) {
+                    try { URL.revokeObjectURL(key); } catch (e) { }
+                }
+            });
+            highResTextureCache.clear();
+        }
+
         const sprites = [];
         const categories = new Set();
         let currentFilter = "ALL";
@@ -1148,7 +1191,7 @@
             categories.clear();
             selectedCategories.clear();
             selectedCategories.add("ALL");
-            highResTextureCache.clear();
+            clearAllHighResTextures();
 
             // 필터 버튼 초기화 (전체보기만 남김)
             const filterBar = document.getElementById("filter-bar");
@@ -1343,7 +1386,6 @@
                                 depthWrite: false
                             });
                             const sprite = new THREE.Sprite(material);
-
                             const aspect = item.aspect_ratio || 1.0;
                             updateSpriteScale(sprite, aspect, nodeBaseSize);
 
@@ -1355,6 +1397,7 @@
                                 index: index,
                                 color: catColor,
                                 aspect: aspect,
+                                thumbTexture: texture,
                                 baseGalaxyPos: basePos,
                                 currentGalaxyPos: sprite.position.clone(),
                                 spherePos: new THREE.Vector3(),
@@ -2168,13 +2211,29 @@
                 previewImg.src = origPath;
             }
 
+            // 🌟 [LRU-10 캐시 터치 및 텍스처 로드]: 최근 본 사진을 캐시 최상단으로 갱신
             if (highResTextureCache.has(origPath)) {
-                target.material.map = highResTextureCache.get(origPath);
+                const cached = highResTextureCache.get(origPath);
+                // Map에서 지웠다 다시 set하면 맨 뒤(가장 최근)로 순서 이동 (LRU 원리)
+                highResTextureCache.delete(origPath);
+                cached.sprite = target;
+                highResTextureCache.set(origPath, cached);
+
+                target.material.map = cached.texture;
                 target.material.needsUpdate = true;
             } else {
                 textureLoader.load(origPath, (tex) => {
                     tex.generateMipmaps = true;
-                    highResTextureCache.set(origPath, tex);
+                    // 신규 고화질 텍스처 캐시 등록
+                    highResTextureCache.set(origPath, {
+                        texture: tex,
+                        sprite: target,
+                        isBlobUrl: !!item.fileObj || origPath.startsWith("blob:")
+                    });
+
+                    // 10장 초과 시 가장 오래된 텍스처 즉시 폐기 및 썸네일 복원
+                    evictOldestHighResTexture();
+
                     if (focusedSprite === target) {
                         target.material.map = tex;
                         target.material.needsUpdate = true;
