@@ -177,7 +177,7 @@
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: #ffffff;
-            padding: 5px 12px;
+            padding: 6px 14px;
             border-radius: 14px;
             font-size: 14px;
             font-weight: 700;
@@ -185,7 +185,7 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             display: inline-flex;
             align-items: center;
-            gap: 7px;
+            gap: 8px;
             user-select: none;
         }
 
@@ -193,15 +193,15 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 4px 3px;
-            margin: -4px 0 -4px -3px;
+            padding: 4px;
+            margin: -4px 0 -4px -4px;
             cursor: pointer;
             border-radius: 50%;
             transition: transform 0.15s ease;
         }
 
         .filter-btn .dot-toggle:hover {
-            transform: scale(1.35);
+            transform: scale(1.4);
         }
 
         .filter-btn .dot {
@@ -216,36 +216,37 @@
         .filter-btn .cat-label {
             cursor: pointer;
             display: inline-block;
-            transition: color 0.15s ease, text-shadow 0.15s ease;
-        }
-
-        .filter-btn .cat-label:hover {
-            color: #60a5fa;
-            text-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
         }
 
         .filter-btn:hover {
-            background: rgba(255, 255, 255, 0.18);
-            border-color: rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.22);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
         }
 
-        /* 켜진 상태 (Active / Included) */
+        /* 🌟 선택된 폴더 (Active - 완전 선명한 화이트 하이라이트) */
         .filter-btn.active {
-            background: rgba(255, 255, 255, 0.20);
-            border-color: rgba(255, 255, 255, 0.45);
-            color: #ffffff;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            background: #ffffff;
+            border-color: #ffffff;
+            color: #08090b;
+            font-weight: 700;
+            box-shadow: 0 2px 12px rgba(255, 255, 255, 0.25);
         }
 
-        /* 꺼진 상태 (Muted / Filtered out) */
+        .filter-btn.active .dot {
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 🌟 필터에서 꺼진 폴더 (Muted / 숨김) */
         .filter-btn.muted {
-            opacity: 0.45;
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.12);
+            opacity: 0.35;
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.10);
+            color: rgba(255, 255, 255, 0.5);
         }
 
         .filter-btn.muted .dot {
-            opacity: 0.35;
+            opacity: 0.3;
             box-shadow: none;
         }
 
@@ -2281,7 +2282,7 @@
             }, 60);
         };
 
-        // 🌟 [이벤트 위임 영구 바인딩]: 동적으로 추가/삭제되는 모든 폴더 버튼의 호버를 100% 감지
+        // 🌟 [이벤트 위임 영구 바인딩]: 동적으로 추가/삭제되는 모든 폴더 버튼의 호버 및 클릭을 100% 감지
         const filterBarEl = document.getElementById("filter-bar");
         filterBarEl.addEventListener("pointerover", (e) => {
             const btn = e.target.closest(".filter-btn");
@@ -2293,18 +2294,39 @@
             clearPlanetHoverSpotlight();
         });
 
+        // 🌟 [이벤트 위임 클릭 엔진]: 인라인 핸들러 누락 원천 방지 (버튼 어디를 누르든 100% 워프 발동)
+        filterBarEl.addEventListener("click", (e) => {
+            const btn = e.target.closest(".filter-btn");
+            if (!btn) return;
+            const cat = btn.dataset.category;
+            if (!cat) return;
+
+            if (e.target.closest(".dot-toggle")) {
+                // 컬러 도트 클릭 시: 카메라 이동 0% 필터 온/오프만 토글
+                toggleCategoryFilter(cat, e);
+            } else {
+                // 버튼 전체 또는 텍스트 클릭 시: 해당 행성 중심 1회성 워프!
+                if (cat === "ALL") {
+                    filterCategory("ALL");
+                } else {
+                    warpToPlanet(cat, e);
+                }
+            }
+        });
+
         // 🌟 필터 버튼 시각적 상태(active/muted) 동기화
-        function syncFilterButtons() {
+        function syncFilterButtons(focusedCat = null) {
             const isAll = selectedCategories.has("ALL");
             document.querySelectorAll(".filter-btn").forEach(btn => {
                 const cat = btn.dataset.category;
                 if (!cat) return;
                 if (cat === "ALL") {
-                    btn.classList.toggle("active", isAll);
-                    btn.classList.toggle("muted", !isAll);
+                    btn.classList.toggle("active", isAll && !focusedCat);
+                    btn.classList.toggle("muted", false);
                 } else {
                     const isIncluded = isAll || selectedCategories.has(cat);
-                    btn.classList.toggle("active", isIncluded);
+                    const isActive = focusedCat ? (cat === focusedCat) : (!isAll && selectedCategories.has(cat));
+                    btn.classList.toggle("active", isActive);
                     btn.classList.toggle("muted", !isIncluded);
                 }
             });
@@ -2354,7 +2376,10 @@
             });
         };
 
-        // 🌟 2. [행성 중심 1회성 워프] 폴더명 텍스트 클릭: 그 행성 앞으로 비행하여 회전 중심축(controls.target) 안착
+        let activeCameraTween = null;
+        let activeTargetTween = null;
+
+        // 🌟 2. [행성 중심 1회성 워프] 폴더명 또는 버튼 클릭: 그 행성 앞으로 비행하여 회전 중심축(controls.target) 안착
         window.warpToPlanet = function (catName, event) {
             if (event) event.stopPropagation();
             if (spotlightClearTimer) clearTimeout(spotlightClearTimer);
@@ -2363,7 +2388,6 @@
             // 만약 해당 폴더가 필터에서 꺼져 있었다면 사용자 편의를 위해 자동으로 켜줌
             if (!selectedCategories.has("ALL") && !selectedCategories.has(catName)) {
                 selectedCategories.add(catName);
-                syncFilterButtons();
                 applyFilters();
                 recalculateAllLayouts();
                 planetLabels.forEach(lbl => {
@@ -2372,20 +2396,32 @@
                 });
             }
 
+            // 버튼 시각 상태: 워프한 행성 버튼을 완전 선명한 Active 하이라이트로 전환
+            syncFilterButtons(catName);
+
             exitFocusMode();
 
             if (currentLayout === 'galaxy') {
                 const meta = planetMetaMap.get(catName);
                 if (meta) {
-                    const targetCamZ = meta.center.z + Math.max(meta.radius * 2.3, 160);
-                    const targetCamY = meta.center.y + Math.max(meta.radius * 0.35, 25);
+                    // 현재 카메라 위치에서 행성 중심을 향하는 방향 벡터를 기반으로 최적의 관측 위치 산출
+                    const camDir = new THREE.Vector3().subVectors(camera.position, meta.center);
+                    if (camDir.length() < 1e-4) camDir.set(0, 0.35, 1);
+                    camDir.normalize();
 
-                    new TWEEN.Tween(camera.position)
-                        .to({ x: meta.center.x, y: targetCamY, z: targetCamZ }, 850)
+                    const safeDistance = Math.max(meta.radius * 2.2, 180);
+                    const targetCamPos = meta.center.clone().addScaledVector(camDir, safeDistance);
+                    targetCamPos.y = meta.center.y + Math.max(meta.radius * 0.3, 25);
+
+                    if (activeCameraTween) activeCameraTween.stop();
+                    if (activeTargetTween) activeTargetTween.stop();
+
+                    activeCameraTween = new TWEEN.Tween(camera.position)
+                        .to({ x: targetCamPos.x, y: targetCamPos.y, z: targetCamPos.z }, 850)
                         .easing(TWEEN.Easing.Cubic.InOut)
                         .start();
 
-                    new TWEEN.Tween(controls.target)
+                    activeTargetTween = new TWEEN.Tween(controls.target)
                         .to({ x: meta.center.x, y: meta.center.y, z: meta.center.z }, 850)
                         .easing(TWEEN.Easing.Cubic.InOut)
                         .start();
