@@ -1,5 +1,17 @@
 # 🪐 CosmoSpace 3D Galaxy AI 기술 작업 일지
 
+## [38차] 2026-09-28: 가이드 카드 넘김(딸깍) 사운드와 영역전개 BGM 간의 정밀 음향 밸런싱(Normalizing) 작업 완료
+
+### 1. 주요 변경 내역
+- **[음향 데시벨 밸런싱 및 피크 억제] (`Gojo Satoru's Domain Expansion Sound.mp3`, `index.html`)**:
+  - 카드 넘김 버튼의 딸깍(`click.mp3`) 사운드(mean_volume: -37.3dB / max_volume: -8.2dB) 대비 기존 영역전개 음원(-11.8dB / -0.4dB)이 지나치게 커서 깜짝 놀랄 수 있었던 볼륨 불균형 해결.
+  - 음원 자체에 `-8dB` 게인 정규화 인코딩을 적용(max_volume: -8.8dB)하여 물리적 피크를 클릭음 수준으로 맞춤.
+  - `index.html` 내 자바스크립트 오디오 재생 엔진에서도 영역전개 볼륨 계수를 마스터 볼륨의 `0.65배`(`Math.min(1.0, masterVolume * 0.65)`)로 조절하여 카드를 딸깍딸깍 넘기다가 마지막 카드에 도달했을 때 이질감 없이 편안하고 자연스럽게 사운드가 조화를 이루도록 튜닝 완료.
+
+### 2. 코드 및 검증 결과
+- `ffmpeg volumedetect`: `mean_volume: -20.3 dB`, `max_volume: -8.8 dB` (클릭음 max -8.2dB와 완벽한 데시벨 동기화).
+- `index.html`: Node.js 인라인 검증 통과 (`index.html sound balance verification passed!`).
+
 ## [37차] 2026-09-28: 고조 사토루 영역전개 오디오 25초 이전 자연스러운 페이드아웃 음향 리마스터링 작업 완료
 
 ### 1. 주요 변경 내역
