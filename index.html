@@ -592,9 +592,10 @@
         // Three.js Scene Setup
         const container = document.getElementById("canvas-container");
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x07090e, 0.0007);
+        // 안개(Fog) 완전 제거: 거리가 아무리 멀어져도 사진이 검게 어두워지지 않고 선명도 100% 유지!
+        scene.fog = null;
 
-        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 3, 6000);
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 3, 10000);
         const DEFAULT_CAM_POS = new THREE.Vector3(0, 120, 650);
         camera.position.copy(DEFAULT_CAM_POS);
 
@@ -796,22 +797,24 @@
             });
         }
 
-        // 🔲 Clean Non-Overlapping Grid Layout
+        // 🔲 Clean Non-Overlapping Grid Layout (수직/수평 정중앙 (0,0,0) 정렬)
         function calculateGridLayout() {
             const visibleSprites = sprites.filter(s => s.visible);
             const count = visibleSprites.length;
             if (count === 0) return;
 
             const cols = Math.ceil(Math.sqrt(count * 1.5));
+            const rows = Math.ceil(count / cols);
             const spacingX = Math.max(nodeBaseSize * 2.2, 34);
             const spacingY = Math.max(nodeBaseSize * 1.9, 30);
             const offsetX = ((cols - 1) * spacingX) / 2;
+            const offsetY = ((rows - 1) * spacingY) / 2;
 
             visibleSprites.forEach((s, idx) => {
                 const col = idx % cols;
                 const row = Math.floor(idx / cols);
                 const x = col * spacingX - offsetX;
-                const y = -row * spacingY + 160;
+                const y = -row * spacingY + offsetY;
                 const z = 0;
                 s.userData.gridPos.set(x, y, z);
             });
@@ -839,7 +842,34 @@
                     .start();
             });
 
-            resetCameraView();
+            if (mode === 'grid') {
+                const visibleCount = sprites.filter(s => s.visible).length;
+                const cols = Math.ceil(Math.sqrt(visibleCount * 1.5));
+                const rows = Math.ceil(visibleCount / cols);
+                const spacingX = Math.max(nodeBaseSize * 2.2, 34);
+                const spacingY = Math.max(nodeBaseSize * 1.9, 30);
+                const fitZ = Math.max(cols * spacingX * 0.9, rows * spacingY * 1.25, 750);
+
+                new TWEEN.Tween(camera.position)
+                    .to({ x: 0, y: 0, z: fitZ }, 1000)
+                    .easing(TWEEN.Easing.Cubic.InOut)
+                    .start();
+                new TWEEN.Tween(controls.target)
+                    .to({ x: 0, y: 0, z: 0 }, 1000)
+                    .easing(TWEEN.Easing.Cubic.InOut)
+                    .start();
+            } else if (mode === 'sphere') {
+                new TWEEN.Tween(camera.position)
+                    .to({ x: 0, y: 80, z: 900 }, 1000)
+                    .easing(TWEEN.Easing.Cubic.InOut)
+                    .start();
+                new TWEEN.Tween(controls.target)
+                    .to({ x: 0, y: 0, z: 0 }, 1000)
+                    .easing(TWEEN.Easing.Cubic.InOut)
+                    .start();
+            } else {
+                resetCameraView();
+            }
         };
 
         // --- Sliders Listeners ---
@@ -1065,8 +1095,21 @@
 
         window.resetCameraView = function() {
             exitFocusMode();
+            let targetPos = DEFAULT_CAM_POS;
+            if (currentLayout === 'grid') {
+                const visibleCount = sprites.filter(s => s.visible).length;
+                const cols = Math.ceil(Math.sqrt(visibleCount * 1.5));
+                const rows = Math.ceil(visibleCount / cols);
+                const spacingX = Math.max(nodeBaseSize * 2.2, 34);
+                const spacingY = Math.max(nodeBaseSize * 1.9, 30);
+                const fitZ = Math.max(cols * spacingX * 0.9, rows * spacingY * 1.25, 750);
+                targetPos = new THREE.Vector3(0, 0, fitZ);
+            } else if (currentLayout === 'sphere') {
+                targetPos = new THREE.Vector3(0, 80, 900);
+            }
+
             new TWEEN.Tween(camera.position)
-                .to({ x: DEFAULT_CAM_POS.x, y: DEFAULT_CAM_POS.y, z: DEFAULT_CAM_POS.z }, 900)
+                .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 900)
                 .easing(TWEEN.Easing.Cubic.Out)
                 .start();
 
