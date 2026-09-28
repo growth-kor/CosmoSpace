@@ -10,6 +10,11 @@ galaxy_data.json
 .DS_Store
 __pycache__/
 
+# Internal development and AI log files
+AI_WORK_LOG.md
+process_data.py
+
 # Whitelist only public sponsor card artwork
 !gozogo4.png
+
 
