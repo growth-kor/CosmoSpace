@@ -533,7 +533,7 @@
             <h1>🪐 Pinterest Galaxy</h1>
             <div id="total-count-badge" class="stats-badge">0장</div>
         </div>
-        <p class="sub-desc">클릭: 선명한 포커스 · 드래그: 자유 비행 탐색</p>
+        <p class="sub-desc">더블 클릭: 사진 상세 보기 & 포커스 · 드래그: 자유 비행 탐색</p>
         
         <div class="search-box">
             <span class="search-icon">🔍</span>
@@ -1106,8 +1106,8 @@
             }
         });
 
-        // Click Action -> Focus Mode & Smart Camera Dolly
-        window.addEventListener("click", (e) => {
+        // 🖱️ 더블 클릭(Double-Click) 시에만 사진 보기 & 포커스 모드 작동!
+        window.addEventListener("dblclick", (e) => {
             if (e.target.closest("#ui-overlay") || e.target.closest("#preview-card") || e.target.closest("#controls-bar") || e.target.closest("#focus-banner")) return;
 
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -1120,6 +1120,22 @@
             if (intersects.length > 0) {
                 const target = intersects[0].object;
                 enterFocusMode(target);
+            }
+        });
+
+        // 빈 배경 1회 클릭 시 포커스 해제 (드래그 회전 시 사진 오작동 방지)
+        window.addEventListener("click", (e) => {
+            if (e.target.closest("#ui-overlay") || e.target.closest("#preview-card") || e.target.closest("#controls-bar") || e.target.closest("#focus-banner")) return;
+
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const visibleSprites = sprites.filter(s => s.visible);
+            const intersects = raycaster.intersectObjects(visibleSprites);
+
+            if (intersects.length === 0 && focusedSprite) {
+                closePreview();
             }
         });
 
