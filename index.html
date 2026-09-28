@@ -402,6 +402,7 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 12px;
+            cursor: zoom-in;
         }
 
         #preview-img {
@@ -409,6 +410,95 @@
             max-height: 280px;
             object-fit: contain;
             border-radius: 8px;
+            transition: transform 0.2s ease;
+        }
+
+        .preview-img-container:hover #preview-img {
+            transform: scale(1.03);
+        }
+
+        /* --- Fullscreen Lightbox Modal --- */
+        #lightbox-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(5, 7, 12, 0.88);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 92vw;
+            max-height: 94vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9);
+            border-radius: 16px;
+            border: 1px solid var(--border-glass);
+            background: rgba(15, 18, 28, 0.96);
+            padding: 18px;
+        }
+
+        #lightbox-img {
+            max-width: 88vw;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .lightbox-info-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 14px;
+            gap: 16px;
+        }
+
+        .lightbox-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .lightbox-close-btn {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #6366f1;
+            border: 2px solid #fff;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease;
+        }
+
+        .lightbox-close-btn:hover {
+            transform: scale(1.15);
+            background: #4f46e5;
         }
 
         .preview-meta-row {
@@ -580,7 +670,7 @@
 
     <!-- Preview Card (Bottom Right) -->
     <div id="preview-card">
-        <div class="preview-img-container">
+        <div class="preview-img-container" onclick="openLightbox()" title="클릭하여 전체화면 원본 확대">
             <img id="preview-img" src="" alt="preview">
         </div>
         <div class="preview-meta-row">
@@ -591,8 +681,26 @@
         <div class="preview-btn-row">
             <button class="btn-tool-action" onclick="flyToCurrentPhoto()" title="3D 공간에서 이 사진의 정면으로 카메라 즉시 이동">🎯 사진 바로가기</button>
             <button class="btn-tool-action" onclick="revealInFinder()" title="Mac Finder에서 실제 파일 위치 열기">📁 폴더 위치 열기</button>
-            <a id="preview-link" class="btn-full-view" href="#" target="_blank" title="새 탭에서 원본 보기">🔍 원본</a>
+            <button class="btn-tool-action" onclick="openLightbox()" title="전체화면 대형 원본 뷰어로 보기">🔍 대형 보기</button>
             <button class="btn-close-card" onclick="closePreview()">✕</button>
+        </div>
+    </div>
+
+    <!-- Fullscreen Lightbox Modal -->
+    <div id="lightbox-modal" onclick="closeLightbox()">
+        <div class="lightbox-content" onclick="event.stopPropagation()">
+            <button class="lightbox-close-btn" onclick="closeLightbox()">&times;</button>
+            <img id="lightbox-img" src="" alt="Full resolution view">
+            <div class="lightbox-info-bar">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div id="lightbox-badge" class="stats-badge">CATEGORY</div>
+                    <div id="lightbox-name" style="font-size:13px; font-weight:600; color:#e2e8f0;">filename.jpg</div>
+                </div>
+                <div class="lightbox-actions">
+                    <button class="btn-tool-action" onclick="revealInFinder()">📁 폴더 위치 열기</button>
+                    <a id="lightbox-link" class="btn-full-view" href="#" target="_blank">🔗 새 탭 열기</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -654,6 +762,7 @@
         scene.add(starField);
 
         const textureLoader = new THREE.TextureLoader();
+        const highResTextureCache = new Map(); // 원본 고화질 텍스처 전용 초고속 LRU 캐시
         const sprites = [];
         const categories = new Set();
         let currentFilter = "ALL";
@@ -1151,8 +1260,23 @@
             previewBadge.style.background = item.color || "#6366f1";
             previewRatio.innerText = `비율: ${item.aspect || 1.0}`;
             previewName.innerText = item.filename;
-            previewLink.href = item.path;
             previewCard.style.display = "block";
+
+            // 🌟 [원본 화질 즉시 스왑]: 더블 클릭된 대상 1장만 3D 공간에서 고해상도 원본 텍스처로 교체!
+            const origPath = item.path;
+            if (highResTextureCache.has(origPath)) {
+                target.material.map = highResTextureCache.get(origPath);
+                target.material.needsUpdate = true;
+            } else {
+                textureLoader.load(origPath, (tex) => {
+                    tex.generateMipmaps = true;
+                    highResTextureCache.set(origPath, tex);
+                    if (focusedSprite === target) {
+                        target.material.map = tex;
+                        target.material.needsUpdate = true;
+                    }
+                });
+            }
 
             // 1. Target: Full Opacity, Top RenderOrder, Scale highlight
             target.material.opacity = 1.0;
@@ -1252,6 +1376,32 @@
                     alert("실제 파일 위치:\n" + itemPath);
                 });
         };
+
+        // 🔍 풀스크린 대형 라이트박스 뷰어 열기 / 닫기
+        window.openLightbox = function() {
+            if (!focusedSprite || !focusedSprite.userData) return;
+            const item = focusedSprite.userData;
+            const modal = document.getElementById("lightbox-modal");
+            document.getElementById("lightbox-img").src = item.path;
+            document.getElementById("lightbox-badge").innerText = item.category;
+            document.getElementById("lightbox-badge").style.background = item.color || "#6366f1";
+            document.getElementById("lightbox-name").innerText = item.filename;
+            document.getElementById("lightbox-link").href = item.path;
+            modal.style.display = "flex";
+        };
+
+        window.closeLightbox = function() {
+            const modal = document.getElementById("lightbox-modal");
+            if (modal) modal.style.display = "none";
+        };
+
+        // ESC 키로 대형 뷰어 및 포커스 닫기
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                closeLightbox();
+                closePreview();
+            }
+        });
 
         window.resetCameraView = function() {
             exitFocusMode();
