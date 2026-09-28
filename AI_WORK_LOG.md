@@ -1,6 +1,20 @@
 # 🪐 Pinterest 3D Galaxy AI 기술 작업 일지
 
-## [11차] 2026-09-28: 3D 스프라이트 원본 고화질 실시간 스왑 & 풀스크린 대형 라이트박스 뷰어 탑재
+## [12차] 2026-09-28: 격자 펼침 모드 3D 궤도 회전 잠금 및 2D 캔버스 슬라이드(Pan) 이동 체계 탑재
+
+### 1. 주요 변경 내역
+- **[프론트엔드] 격자 펼침(Grid) 모드 전용 2D 평면 패닝(Pan/Slide) 네비게이션 적용 (`index.html`)**:
+  - 기존 3D 궤도 회전(`Orbit`)으로 인해 격자가 비스듬하게 기울어지며 탐색이 불편했던 문제 해결.
+  - `🔲 격자 펼침 (겹침 0%)` 모드 진입 시:
+    - 3D 회전을 비활성화(`controls.enableRotate = false`)하고 마우스 좌클릭 드래그를 **2D 평면 패닝(`controls.mouseButtons.LEFT = THREE.MOUSE.PAN`)** 으로 자동 전환.
+    - 화면 좌표계 기준 부드러운 패닝(`controls.screenSpacePanning = true`)을 통해 마우스 좌클릭 드래그만으로 피그마나 미로 보드처럼 사진 벽면을 상하좌우로 매끄럽게 슬라이드 이동 가능.
+  - `🌐 구체 표면` 및 `🌌 은하 군집` 모드로 복귀 시:
+    - 3D 회전 제어(`controls.enableRotate = true`, `controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE`)가 원래대로 자동 복원.
+  - 상단 가이드 텍스트 역시 현재 모드에 맞추어 `더블 클릭: 사진 상세 보기 · 좌클릭 드래그: 2D 캔버스 상하좌우 슬라이드 이동`으로 동적 갱신.
+
+### 2. 코드 및 검증 결과
+- `index.html`: `controls.screenSpacePanning = true;` 및 `switchLayout` 모드별 마우스 좌클릭 매핑(`LEFT = THREE.MOUSE.PAN`) 연동 검증 완료.
+
 
 ### 1. 주요 변경 내역
 - **[프론트엔드] 3D 공간 내 1장 단위 원본 고화질 텍스처 즉시 스왑 (`index.html`)**:

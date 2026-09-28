@@ -743,6 +743,7 @@
         controls.minDistance = 15;
         controls.autoRotate = false;
         controls.autoRotateSpeed = 0.5;
+        controls.screenSpacePanning = true;
 
         // Background Star Dust Particles
         const starGeo = new THREE.BufferGeometry();
@@ -979,8 +980,15 @@
                     .start();
             });
 
+            const subDescEl = document.querySelector(".sub-desc");
             if (mode === 'grid') {
+                // 🔲 격자 펼침 모드: 3D 회전을 잠그고 마우스 좌클릭 드래그를 2D 평면 패닝(슬라이드)으로 전환
+                controls.enableRotate = false;
                 controls.enablePan = true;
+                controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
+                controls.touches.ONE = THREE.TOUCH.PAN;
+                if (subDescEl) subDescEl.innerText = "더블 클릭: 사진 상세 보기 · 좌클릭 드래그: 2D 캔버스 상하좌우 슬라이드 이동";
+
                 spreadLabel.innerText = "🔲 격자 간격:";
                 spreadSlider.min = "0.5";
                 spreadSlider.max = "3.0";
@@ -1003,8 +1011,13 @@
                     .easing(TWEEN.Easing.Cubic.InOut)
                     .start();
             } else if (mode === 'sphere') {
-                // 구체 표면 모드: 구의 크기 조절 슬라이더 연동
+                // 🌐 구체 표면 모드: 구의 중심을 바라보며 회전 탐색
+                controls.enableRotate = true;
                 controls.enablePan = false;
+                controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+                controls.touches.ONE = THREE.TOUCH.ROTATE;
+                if (subDescEl) subDescEl.innerText = "더블 클릭: 사진 상세 보기 · 드래그: 구체 표면 360° 궤도 회전";
+
                 spreadLabel.innerText = "🌐 구체 크기:";
                 spreadSlider.min = "0.3";
                 spreadSlider.max = "3.0";
@@ -1021,7 +1034,13 @@
                     .easing(TWEEN.Easing.Cubic.InOut)
                     .start();
             } else {
+                // 🌌 은하 군집 모드: 3D 자유 회전 및 이동
+                controls.enableRotate = true;
                 controls.enablePan = true;
+                controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
+                controls.touches.ONE = THREE.TOUCH.ROTATE;
+                if (subDescEl) subDescEl.innerText = "더블 클릭: 사진 상세 보기 & 포커스 · 드래그: 자유 비행 탐색";
+
                 spreadLabel.innerText = "🌌 은하 팽창:";
                 spreadSlider.min = "0.5";
                 spreadSlider.max = "4.0";
