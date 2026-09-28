@@ -1,5 +1,17 @@
 # 🪐 Pinterest 3D Galaxy AI 기술 작업 일지
 
+## [21차] 2026-09-28: 타이포그래피 전면 교체 - '조선일보명조체' 적용 및 글자 깨짐/비트맵 현상 원천 해소
+
+### 1. 주요 변경 내역
+- **[서체 교체] 델타글라스체 $\rightarrow$ '조선일보명조체(Chosunilbo_myungjo)' 전면 적용 (`index.html`)**:
+  - 눈누 폰트 페이지 63번 조선일보명조체 웹폰트 CDN(`Chosunilbo_myungjo.woff`) 연동.
+  - 기존 델타글라스체의 픽셀 깨짐/비트맵 계단 현상 및 과도한 획 뭉개짐 결함 100% 해소.
+  - 인위적으로 먹였던 텍스트 외곽선 핵(`-webkit-text-stroke`)을 완전 제거하고, 명조체 특유의 수려한 곡선과 단아한 획 굵기를 살려 고급스러운 아카이브/아트 갤러리 감성 완성.
+  - `-webkit-font-smoothing: antialiased;` 및 `text-rendering: optimizeLegibility;`를 통해 레티나 맥북 및 윈도우 환경에서 글자가 비뚤어짐 없이 매끄럽게 렌더링되도록 복원.
+
+### 2. 코드 및 검증 결과
+- `index.html`: Node.js 인라인 검증 통과 (`Size: 82,294B`, `Chosunilbo_myungjo: true`).
+
 ## [20차] 2026-09-28: DeltaGlassKR 타이포그래피 전면 통일 및 기종 불문 가독성·선명도 최적화 (크로스 플랫폼 안티앨리어싱)
 
 ### 1. 주요 변경 내역
