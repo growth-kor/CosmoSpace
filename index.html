@@ -832,17 +832,7 @@
 
     <!-- Controls Bar (Top Right: 3D Viewport Controls ONLY) -->
     <div id="controls-bar">
-        <!-- Layout Mode Buttons -->
-        <div class="button-group-row">
-            <button id="btn-mode-galaxy" class="tool-btn active-mode" onclick="switchLayout('galaxy')">폴더 행성계</button>
-            <button id="btn-mode-sphere" class="tool-btn" onclick="switchLayout('sphere')">단일 구체</button>
-            <button id="btn-mode-grid" class="tool-btn" onclick="switchLayout('grid')">격자 펼침</button>
-            <button class="tool-btn" onclick="resetCameraView()">조망</button>
-            <button class="tool-btn" onclick="toggleAutoRotate()">회전</button>
-            <button class="tool-btn" onclick="openGuideModal(0)" title="사용 가이드 열기" style="padding:9px 12px; font-size:14px;">?</button>
-        </div>
-
-        <!-- Sliders for Space Expansion, Node Size, and Focus Dimming -->
+        <!-- Sliders Panel (Top: Space Expansion, Node Size, Focus Dimming, Rotate Speed) -->
         <div class="sliders-panel">
             <div class="slider-item">
                 <span id="spread-label">은하 팽창:</span>
@@ -859,6 +849,22 @@
                 <input type="range" id="dim-slider" min="0" max="100" step="5" value="20">
                 <span id="dim-val" class="val-badge">20%</span>
             </div>
+            <!-- 회전 모드 활성화 시 부드럽게 노출되는 회전 속도 슬라이더 -->
+            <div class="slider-item" id="rotate-speed-item" style="display:none;">
+                <span>회전 속도:</span>
+                <input type="range" id="rotate-speed-slider" min="0.1" max="3.0" step="0.1" value="0.5">
+                <span id="rotate-speed-val" class="val-badge">0.5x</span>
+            </div>
+        </div>
+
+        <!-- Layout Mode Buttons (Bottom) -->
+        <div class="button-group-row">
+            <button id="btn-mode-galaxy" class="tool-btn active-mode" onclick="switchLayout('galaxy')">폴더 행성계</button>
+            <button id="btn-mode-sphere" class="tool-btn" onclick="switchLayout('sphere')">단일 구체</button>
+            <button id="btn-mode-grid" class="tool-btn" onclick="switchLayout('grid')">격자 펼침</button>
+            <button class="tool-btn" onclick="resetCameraView()">조망</button>
+            <button id="btn-rotate" class="tool-btn" onclick="toggleAutoRotate()">회전</button>
+            <button class="tool-btn" onclick="openGuideModal(0)" title="사용 가이드 열기" style="padding:9px 12px; font-size:14px;">?</button>
         </div>
     </div>
 
@@ -1063,6 +1069,10 @@
         const sizeVal = document.getElementById("size-val");
         const dimSlider = document.getElementById("dim-slider");
         const dimVal = document.getElementById("dim-val");
+        const rotateSpeedItem = document.getElementById("rotate-speed-item");
+        const rotateSpeedSlider = document.getElementById("rotate-speed-slider");
+        const rotateSpeedVal = document.getElementById("rotate-speed-val");
+        const btnRotate = document.getElementById("btn-rotate");
 
         // 🌟 100% 브라우저 순수 클라이언트 은하 데이터 구축 및 렌더러
         // 🪐 행성 구체 메타데이터 & 3D 네온 라벨 보관소
@@ -1839,8 +1849,15 @@
             }
         });
 
+        // 4. Rotate Speed Slider (0.1x ~ 3.0x)
+        rotateSpeedSlider.addEventListener("input", (e) => {
+            const v = parseFloat(e.target.value);
+            controls.autoRotateSpeed = v;
+            rotateSpeedVal.innerText = `${v.toFixed(1)}x`;
+        });
+
         // 슬라이더 조작 완료(마우스/터치 해제 및 값 확정) 즉시 포커스 자동 해제하여 WASD 키보드 입력 복원
-        [spreadSlider, sizeSlider, dimSlider].forEach(slider => {
+        [spreadSlider, sizeSlider, dimSlider, rotateSpeedSlider].forEach(slider => {
             slider.addEventListener("change", () => slider.blur());
             slider.addEventListener("pointerup", () => slider.blur());
         });
@@ -2329,6 +2346,8 @@
 
         window.toggleAutoRotate = function () {
             controls.autoRotate = !controls.autoRotate;
+            btnRotate.classList.toggle("active-mode", controls.autoRotate);
+            rotateSpeedItem.style.display = controls.autoRotate ? "flex" : "none";
         };
 
         // Window Resize
