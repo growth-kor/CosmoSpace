@@ -1124,7 +1124,7 @@
             if (!fileList || fileList.length === 0) return;
 
             const allFiles = Array.from(fileList);
-            const validExts = ['.jpg', '.jpeg', '.png', '.webp', '.avif'];
+            const validExts = ['.jpg', '.jpeg', '.png', '.webp', '.avif', '.gif', '.bmp'];
 
             // 1. 기존 galaxy_data.json 및 thumbnails/가 포함된 폴더인지 스마트 감지
             const jsonFile = allFiles.find(f => f.name.toLowerCase() === "galaxy_data.json");
