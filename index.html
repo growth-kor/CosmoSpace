@@ -537,7 +537,7 @@
             <button class="tool-btn" onclick="toggleAutoRotate()">🔄 회전</button>
         </div>
 
-        <!-- Sliders for Space Expansion and Node Size -->
+        <!-- Sliders for Space Expansion, Node Size, and Focus Dimming -->
         <div class="sliders-panel">
             <div class="slider-item">
                 <span>🌌 은하 팽창:</span>
@@ -548,6 +548,11 @@
                 <span>🔍 크기:</span>
                 <input type="range" id="size-slider" min="8" max="28" step="1" value="16">
                 <span id="size-val" class="val-badge">16px</span>
+            </div>
+            <div class="slider-item">
+                <span>👻 배경 흐림:</span>
+                <input type="range" id="dim-slider" min="0" max="100" step="5" value="20" title="선택 시 주변 사진 투명도 (0% = 완전 숨김, 100% = 흐림 없음)">
+                <span id="dim-val" class="val-badge">20%</span>
             </div>
         </div>
     </div>
@@ -635,6 +640,7 @@
         // Interactive Sliders State
         let galaxySpread = 1.8; // Default 1.8x spread for breathing room!
         let nodeBaseSize = 16;  // Default 16px size
+        let focusDimOpacity = 0.20; // Default 20% opacity for non-focused sprites (adjustable 0% ~ 100%)
 
         // UI Element References
         const loadingOverlay = document.getElementById("loading-overlay");
@@ -653,6 +659,8 @@
         const spreadVal = document.getElementById("spread-val");
         const sizeSlider = document.getElementById("size-slider");
         const sizeVal = document.getElementById("size-val");
+        const dimSlider = document.getElementById("dim-slider");
+        const dimVal = document.getElementById("dim-val");
 
         // Load Galaxy JSON
         fetch("galaxy_data.json")
@@ -869,6 +877,21 @@
             }
         });
 
+        // 3. Focus Dimming Slider (0% ~ 100%)
+        dimSlider.addEventListener("input", (e) => {
+            const v = parseInt(e.target.value);
+            focusDimOpacity = v / 100.0;
+            dimVal.innerText = `${v}%`;
+
+            if (focusedSprite) {
+                sprites.forEach(s => {
+                    if (s !== focusedSprite) {
+                        s.material.opacity = focusDimOpacity;
+                    }
+                });
+            }
+        });
+
         // Filter Logic
         window.filterCategory = function (catName) {
             currentFilter = catName;
@@ -989,12 +1012,12 @@
             target.renderOrder = 999;
             target.scale.copy(item.currentScale).multiplyScalar(1.25);
 
-            // 2. All other sprites: Fade to Ghost Mode (0.08 Opacity) to guarantee crystal clear view!
+            // 2. All other sprites: Fade to adjustable Ghost Mode opacity!
             sprites.forEach(s => {
                 if (s !== target) {
                     s.renderOrder = 0;
                     new TWEEN.Tween(s.material)
-                        .to({ opacity: 0.08 }, 300)
+                        .to({ opacity: focusDimOpacity }, 250)
                         .start();
                     s.scale.copy(s.userData.currentScale);
                 }
