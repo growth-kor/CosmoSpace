@@ -5,11 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🪐 Pinterest 3D Galaxy Studio</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <!-- 델타글라스체 (DeltaGlassKR) 웹폰트 정의 -->
     <style>
+        @font-face {
+            font-family: 'DeltaGlassKR';
+            src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/2608201744@deltaglasskr/deltaglasskr/DeltaGlassKR.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
         :root {
             --bg-base: #07090e;
             --accent-primary: #6366f1;
@@ -23,13 +28,17 @@
         * {
             box-sizing: border-box;
             user-select: none;
+            font-family: 'DeltaGlassKR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body, button, input, textarea, select {
+            font-family: 'DeltaGlassKR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         body {
             margin: 0;
             overflow: hidden;
             background-color: var(--bg-base);
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             color: var(--text-main);
         }
 
@@ -844,7 +853,7 @@
             ctx.shadowColor = colorHex || "#818cf8";
             ctx.shadowBlur = 12;
             ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 34px 'Pretendard', sans-serif";
+            ctx.font = "bold 34px 'DeltaGlassKR', sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
