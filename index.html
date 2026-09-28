@@ -745,7 +745,7 @@
         // 안개(Fog) 완전 제거: 거리가 아무리 멀어져도 사진이 검게 어두워지지 않고 선명도 100% 유지!
         scene.fog = null;
 
-        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 3, 10000);
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100000);
         const DEFAULT_CAM_POS = new THREE.Vector3(0, 120, 650);
         camera.position.copy(DEFAULT_CAM_POS);
 
@@ -758,8 +758,8 @@
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.06;
-        controls.maxDistance = 3500;
-        controls.minDistance = 15;
+        controls.maxDistance = 60000; // 거리 락 해제: 우주 끝까지 시원하게 조망 가능!
+        controls.minDistance = 0.5;   // 근접 클리핑 해제: 코앞에서도 잘림 0%!
         controls.autoRotate = false;
         controls.autoRotateSpeed = 0.5;
         controls.screenSpacePanning = true;
@@ -769,7 +769,7 @@
         const starCount = 1800;
         const starPositions = new Float32Array(starCount * 3);
         for (let i = 0; i < starCount * 3; i++) {
-            starPositions[i] = (Math.random() - 0.5) * 3500;
+            starPositions[i] = (Math.random() - 0.5) * 8000;
         }
         starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
         const starMat = new THREE.PointsMaterial({
