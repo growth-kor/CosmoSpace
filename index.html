@@ -12,8 +12,8 @@
         :root {
             --bg-base: #07090e;
             --accent-primary: #6366f1;
-            --accent-glow: rgba(99, 102, 241, 0.4);
-            --surface-glass: rgba(15, 18, 28, 0.82);
+            --accent-glow: rgba(99, 102, 241, 0.45);
+            --surface-glass: rgba(15, 18, 28, 0.85);
             --border-glass: rgba(255, 255, 255, 0.14);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
@@ -46,13 +46,13 @@
             top: 24px;
             left: 24px;
             z-index: 100;
-            max-width: 460px;
+            max-width: 440px;
             background: var(--surface-glass);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border-glass);
             border-radius: 18px;
-            padding: 18px 22px;
+            padding: 18px 20px;
             box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.12);
             transition: opacity 0.3s ease;
         }
@@ -66,7 +66,7 @@
 
         h1 {
             margin: 0;
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 800;
             letter-spacing: -0.5px;
             background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
@@ -107,7 +107,7 @@
             padding: 8px 14px 8px 34px;
             border-radius: 10px;
             color: #fff;
-            font-size: 13px;
+            font-size: 12.5px;
             outline: none;
             transition: all 0.2s ease;
             font-family: inherit;
@@ -124,7 +124,7 @@
             left: 11px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
             pointer-events: none;
         }
@@ -133,8 +133,8 @@
         #filter-bar {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
-            max-height: 130px;
+            gap: 5px;
+            max-height: 120px;
             overflow-y: auto;
             padding-right: 4px;
         }
@@ -152,7 +152,7 @@
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.14);
             color: #cbd5e1;
-            padding: 4px 10px;
+            padding: 4px 9px;
             border-radius: 14px;
             font-size: 11px;
             font-weight: 500;
@@ -184,14 +184,21 @@
             box-shadow: 0 4px 14px var(--accent-glow);
         }
 
-        /* Controls Toolbar (Top Right) */
+        /* --- Controls Toolbar (Top Right) --- */
         #controls-bar {
             position: absolute;
             top: 24px;
             right: 24px;
             z-index: 100;
             display: flex;
+            flex-direction: column;
             gap: 8px;
+            align-items: flex-end;
+        }
+
+        .button-group-row {
+            display: flex;
+            gap: 6px;
             flex-wrap: wrap;
             justify-content: flex-end;
         }
@@ -201,16 +208,16 @@
             backdrop-filter: blur(16px);
             border: 1px solid var(--border-glass);
             color: #fff;
-            padding: 8px 13px;
-            border-radius: 12px;
-            font-size: 12px;
+            padding: 7px 12px;
+            border-radius: 11px;
+            font-size: 11.5px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             transition: all 0.2s ease;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
         }
 
         .tool-btn:hover {
@@ -225,6 +232,59 @@
             box-shadow: 0 0 14px var(--accent-glow);
         }
 
+        /* Sliders Panel */
+        .sliders-panel {
+            background: var(--surface-glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 8px 14px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        .slider-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .slider-item input[type="range"] {
+            -webkit-appearance: none;
+            width: 90px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .slider-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #818cf8;
+            box-shadow: 0 0 8px var(--accent-primary);
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .slider-item input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .val-badge {
+            font-size: 10.5px;
+            color: #a5b4fc;
+            min-width: 32px;
+        }
+
         /* Focus Mode Status Bar */
         #focus-banner {
             position: absolute;
@@ -232,8 +292,8 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 100;
-            background: rgba(99, 102, 241, 0.9);
-            backdrop-filter: blur(12px);
+            background: rgba(99, 102, 241, 0.92);
+            backdrop-filter: blur(14px);
             border: 1px solid #818cf8;
             padding: 7px 18px;
             border-radius: 20px;
@@ -442,7 +502,7 @@
 
     <!-- Focus Mode Banner -->
     <div id="focus-banner" onclick="exitFocusMode()">
-        <span>🎯 포커스 모드 (시야 차폐 방지 중)</span>
+        <span>🎯 포커스 모드 (주변 자동 투명화 중)</span>
         <span style="opacity: 0.7; font-size: 11px;">[여기를 눌러 해제]</span>
     </div>
 
@@ -452,7 +512,7 @@
             <h1>🪐 Pinterest Galaxy</h1>
             <div id="total-count-badge" class="stats-badge">0장</div>
         </div>
-        <p class="sub-desc">클릭: 선명한 포커스 (방해물 자동 투명화) · 드래그: 자유 비행</p>
+        <p class="sub-desc">클릭: 선명한 포커스 · 드래그: 자유 비행 탐색</p>
         
         <div class="search-box">
             <span class="search-icon">🔍</span>
@@ -468,10 +528,28 @@
 
     <!-- Controls Bar (Top Right) -->
     <div id="controls-bar">
-        <button id="btn-mode-galaxy" class="tool-btn active-mode" onclick="switchLayout('galaxy')">🌌 은하 군집</button>
-        <button id="btn-mode-grid" class="tool-btn" onclick="switchLayout('grid')">🔲 격자 펼침 (겹침 0%)</button>
-        <button class="tool-btn" onclick="resetCameraView()">🔭 전체 조망</button>
-        <button class="tool-btn" onclick="toggleAutoRotate()">🔄 자동 회전</button>
+        <!-- Layout Mode Buttons -->
+        <div class="button-group-row">
+            <button id="btn-mode-galaxy" class="tool-btn active-mode" onclick="switchLayout('galaxy')">🌌 은하 군집</button>
+            <button id="btn-mode-sphere" class="tool-btn" onclick="switchLayout('sphere')">🌐 구체 표면 (0% 파묻힘)</button>
+            <button id="btn-mode-grid" class="tool-btn" onclick="switchLayout('grid')">🔲 격자 펼침 (겹침 0%)</button>
+            <button class="tool-btn" onclick="resetCameraView()">🔭 조망</button>
+            <button class="tool-btn" onclick="toggleAutoRotate()">🔄 회전</button>
+        </div>
+
+        <!-- Sliders for Space Expansion and Node Size -->
+        <div class="sliders-panel">
+            <div class="slider-item">
+                <span>🌌 은하 팽창:</span>
+                <input type="range" id="spread-slider" min="1.0" max="4.0" step="0.1" value="1.8">
+                <span id="spread-val" class="val-badge">1.8x</span>
+            </div>
+            <div class="slider-item">
+                <span>🔍 크기:</span>
+                <input type="range" id="size-slider" min="8" max="28" step="1" value="16">
+                <span id="size-val" class="val-badge">16px</span>
+            </div>
+        </div>
     </div>
 
     <!-- Preview Card (Bottom Right) -->
@@ -509,11 +587,10 @@
         // Three.js Scene Setup
         const container = document.getElementById("canvas-container");
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x07090e, 0.0009);
+        scene.fog = new THREE.FogExp2(0x07090e, 0.0007);
 
-        // Near plane set to 3.0 to clip extreme close-up lens occlusion
-        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 3, 5000);
-        const DEFAULT_CAM_POS = new THREE.Vector3(0, 100, 520);
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 3, 6000);
+        const DEFAULT_CAM_POS = new THREE.Vector3(0, 120, 650);
         camera.position.copy(DEFAULT_CAM_POS);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
@@ -525,24 +602,24 @@
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.06;
-        controls.maxDistance = 2500;
+        controls.maxDistance = 3500;
         controls.minDistance = 15;
         controls.autoRotate = false;
-        controls.autoRotateSpeed = 0.6;
+        controls.autoRotateSpeed = 0.5;
 
         // Background Star Dust Particles
         const starGeo = new THREE.BufferGeometry();
-        const starCount = 1500;
+        const starCount = 1800;
         const starPositions = new Float32Array(starCount * 3);
         for (let i = 0; i < starCount * 3; i++) {
-            starPositions[i] = (Math.random() - 0.5) * 3000;
+            starPositions[i] = (Math.random() - 0.5) * 3500;
         }
         starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
         const starMat = new THREE.PointsMaterial({
             color: 0x64748b,
             size: 2,
             transparent: true,
-            opacity: 0.5
+            opacity: 0.4
         });
         const starField = new THREE.Points(starGeo, starMat);
         scene.add(starField);
@@ -554,6 +631,10 @@
         let searchQuery = "";
         let currentLayout = "galaxy";
         let focusedSprite = null;
+
+        // Interactive Sliders State
+        let galaxySpread = 1.8; // Default 1.8x spread for breathing room!
+        let nodeBaseSize = 16;  // Default 16px size
 
         // UI Element References
         const loadingOverlay = document.getElementById("loading-overlay");
@@ -568,6 +649,10 @@
         const previewRatio = document.getElementById("preview-ratio");
         const previewLink = document.getElementById("preview-link");
         const focusBanner = document.getElementById("focus-banner");
+        const spreadSlider = document.getElementById("spread-slider");
+        const spreadVal = document.getElementById("spread-val");
+        const sizeSlider = document.getElementById("size-slider");
+        const sizeVal = document.getElementById("size-val");
 
         // Load Galaxy JSON
         fetch("galaxy_data.json")
@@ -590,7 +675,7 @@
                         setTimeout(() => {
                             loadingOverlay.style.opacity = "0";
                             setTimeout(() => loadingOverlay.style.display = "none", 600);
-                            calculateGridLayouts();
+                            recalculateAllLayouts();
                         }, 200);
                     }
                 }
@@ -612,28 +697,23 @@
                             });
                             const sprite = new THREE.Sprite(material);
 
-                            // Maintain original aspect ratio with base size
+                            // Calculate aspect ratio scale
                             const aspect = item.aspect_ratio || 1.0;
-                            const baseSize = 18;
-                            let sx, sy;
-                            if (aspect >= 1.0) {
-                                sx = baseSize * Math.min(aspect, 2.5);
-                                sy = baseSize;
-                            } else {
-                                sx = baseSize;
-                                sy = baseSize / Math.max(aspect, 0.4);
-                            }
-                            sprite.scale.set(sx, sy, 1);
+                            updateSpriteScale(sprite, aspect, nodeBaseSize);
 
-                            // Store positions
-                            sprite.position.set(item.x, item.y, item.z);
+                            // Initial position with default 1.8x spread factor applied
+                            const basePos = new THREE.Vector3(item.x, item.y, item.z);
+                            sprite.position.copy(basePos).multiplyScalar(galaxySpread);
+
                             sprite.userData = {
                                 ...item,
                                 index: index,
-                                originalScale: sprite.scale.clone(),
                                 color: catColor,
-                                galaxyPos: new THREE.Vector3(item.x, item.y, item.z),
-                                gridPos: new THREE.Vector3(0, 0, 0)
+                                aspect: aspect,
+                                baseGalaxyPos: basePos,
+                                currentGalaxyPos: sprite.position.clone(),
+                                spherePos: new THREE.Vector3(),
+                                gridPos: new THREE.Vector3()
                             };
 
                             scene.add(sprite);
@@ -665,38 +745,86 @@
                 progressSub.innerText = "process_data.py를 먼저 실행해 주세요.";
             });
 
-        // Calculate Clean Non-Overlapping Grid Layout
-        function calculateGridLayouts() {
+        function updateSpriteScale(sprite, aspect, baseSize) {
+            let sx, sy;
+            if (aspect >= 1.0) {
+                sx = baseSize * Math.min(aspect, 2.5);
+                sy = baseSize;
+            } else {
+                sx = baseSize;
+                sy = baseSize / Math.max(aspect, 0.4);
+            }
+            sprite.scale.set(sx, sy, 1);
+            if (sprite.userData) {
+                sprite.userData.currentScale = sprite.scale.clone();
+            }
+        }
+
+        // --- Layout Calculations (Grid & Hollow Fibonacci Sphere) ---
+        function recalculateAllLayouts() {
+            calculateSphereLayout();
+            calculateGridLayout();
+        }
+
+        // 🌐 Fibonacci Hollow Sphere: 0% Buried images! Every single image on the outer shell!
+        function calculateSphereLayout() {
+            const visibleSprites = sprites.filter(s => s.visible);
+            const count = visibleSprites.length;
+            if (count === 0) return;
+
+            // Radius scales dynamically with item count so items don't overlap on shell
+            const radius = Math.max(300, Math.sqrt(count) * 16.5);
+            const goldenRatio = (1 + Math.sqrt(5)) / 2;
+
+            visibleSprites.forEach((s, idx) => {
+                const theta = 2 * Math.PI * idx / goldenRatio;
+                const phi = Math.acos(1 - 2 * (idx + 0.5) / count);
+
+                const x = radius * Math.cos(theta) * Math.sin(phi);
+                const y = radius * Math.sin(theta) * Math.sin(phi);
+                const z = radius * Math.cos(phi);
+
+                s.userData.spherePos.set(x, y, z);
+            });
+        }
+
+        // 🔲 Clean Non-Overlapping Grid Layout
+        function calculateGridLayout() {
             const visibleSprites = sprites.filter(s => s.visible);
             const count = visibleSprites.length;
             if (count === 0) return;
 
             const cols = Math.ceil(Math.sqrt(count * 1.5));
-            const spacingX = 36;
-            const spacingY = 32;
+            const spacingX = Math.max(nodeBaseSize * 2.2, 34);
+            const spacingY = Math.max(nodeBaseSize * 1.9, 30);
             const offsetX = ((cols - 1) * spacingX) / 2;
 
             visibleSprites.forEach((s, idx) => {
                 const col = idx % cols;
                 const row = Math.floor(idx / cols);
                 const x = col * spacingX - offsetX;
-                const y = -row * spacingY + 150;
+                const y = -row * spacingY + 160;
                 const z = 0;
                 s.userData.gridPos.set(x, y, z);
             });
         }
 
-        // Layout Switcher (Galaxy ↔ Grid)
+        // --- Layout Switcher ---
         window.switchLayout = function(mode) {
             currentLayout = mode;
             document.getElementById("btn-mode-galaxy").classList.toggle("active-mode", mode === 'galaxy');
+            document.getElementById("btn-mode-sphere").classList.toggle("active-mode", mode === 'sphere');
             document.getElementById("btn-mode-grid").classList.toggle("active-mode", mode === 'grid');
 
             exitFocusMode();
-            calculateGridLayouts();
+            recalculateAllLayouts();
 
             sprites.forEach(sprite => {
-                const targetPos = (mode === 'grid') ? sprite.userData.gridPos : sprite.userData.galaxyPos;
+                let targetPos;
+                if (mode === 'grid') targetPos = sprite.userData.gridPos;
+                else if (mode === 'sphere') targetPos = sprite.userData.spherePos;
+                else targetPos = sprite.userData.currentGalaxyPos;
+
                 new TWEEN.Tween(sprite.position)
                     .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, 1000)
                     .easing(TWEEN.Easing.Cubic.InOut)
@@ -705,6 +833,41 @@
 
             resetCameraView();
         };
+
+        // --- Sliders Listeners ---
+        // 1. Galaxy Expansion Slider (1.0x ~ 4.0x)
+        spreadSlider.addEventListener("input", (e) => {
+            galaxySpread = parseFloat(e.target.value);
+            spreadVal.innerText = `${galaxySpread.toFixed(1)}x`;
+
+            sprites.forEach(sprite => {
+                if (sprite.userData && sprite.userData.baseGalaxyPos) {
+                    sprite.userData.currentGalaxyPos.copy(sprite.userData.baseGalaxyPos).multiplyScalar(galaxySpread);
+                    if (currentLayout === 'galaxy') {
+                        sprite.position.copy(sprite.userData.currentGalaxyPos);
+                    }
+                }
+            });
+        });
+
+        // 2. Node Size Slider (8px ~ 28px)
+        sizeSlider.addEventListener("input", (e) => {
+            nodeBaseSize = parseInt(e.target.value);
+            sizeVal.innerText = `${nodeBaseSize}px`;
+
+            sprites.forEach(sprite => {
+                if (sprite.userData) {
+                    updateSpriteScale(sprite, sprite.userData.aspect, nodeBaseSize);
+                }
+            });
+
+            if (currentLayout === 'grid') {
+                calculateGridLayout();
+                sprites.filter(s => s.visible).forEach(sprite => {
+                    sprite.position.copy(sprite.userData.gridPos);
+                });
+            }
+        });
 
         // Filter Logic
         window.filterCategory = function (catName) {
@@ -715,11 +878,13 @@
             });
             exitFocusMode();
             applyFilters();
-            if (currentLayout === 'grid') {
-                calculateGridLayouts();
+            recalculateAllLayouts();
+
+            if (currentLayout !== 'galaxy') {
                 sprites.filter(s => s.visible).forEach(sprite => {
+                    const target = (currentLayout === 'grid') ? sprite.userData.gridPos : sprite.userData.spherePos;
                     new TWEEN.Tween(sprite.position)
-                        .to({ x: sprite.userData.gridPos.x, y: sprite.userData.gridPos.y, z: sprite.userData.gridPos.z }, 800)
+                        .to({ x: target.x, y: target.y, z: target.z }, 700)
                         .easing(TWEEN.Easing.Cubic.Out)
                         .start();
                 });
@@ -731,7 +896,7 @@
             searchQuery = e.target.value.toLowerCase().trim();
             exitFocusMode();
             applyFilters();
-            if (currentLayout === 'grid') calculateGridLayouts();
+            recalculateAllLayouts();
         });
 
         function applyFilters() {
@@ -769,25 +934,25 @@
             if (intersects.length > 0) {
                 const target = intersects[0].object;
                 if (hoveredSprite !== target) {
-                    if (hoveredSprite && hoveredSprite !== focusedSprite && hoveredSprite.userData.originalScale) {
-                        hoveredSprite.scale.copy(hoveredSprite.userData.originalScale);
+                    if (hoveredSprite && hoveredSprite !== focusedSprite && hoveredSprite.userData.currentScale) {
+                        hoveredSprite.scale.copy(hoveredSprite.userData.currentScale);
                     }
                     hoveredSprite = target;
-                    if (target.userData.originalScale) {
-                        target.scale.copy(target.userData.originalScale).multiplyScalar(1.22);
+                    if (target.userData.currentScale) {
+                        target.scale.copy(target.userData.currentScale).multiplyScalar(1.25);
                     }
                 }
                 document.body.style.cursor = "pointer";
             } else {
-                if (hoveredSprite && hoveredSprite !== focusedSprite && hoveredSprite.userData.originalScale) {
-                    hoveredSprite.scale.copy(hoveredSprite.userData.originalScale);
+                if (hoveredSprite && hoveredSprite !== focusedSprite && hoveredSprite.userData.currentScale) {
+                    hoveredSprite.scale.copy(hoveredSprite.userData.currentScale);
                     hoveredSprite = null;
                 }
                 document.body.style.cursor = "default";
             }
         });
 
-        // Click Action -> Focus Mode (X-Ray Ghost Mode) & Smart Camera Dolly
+        // Click Action -> Focus Mode & Smart Camera Dolly
         window.addEventListener("click", (e) => {
             if (e.target.closest("#ui-overlay") || e.target.closest("#preview-card") || e.target.closest("#controls-bar") || e.target.closest("#focus-banner")) return;
 
@@ -814,7 +979,7 @@
             previewImg.src = item.path;
             previewBadge.innerText = item.category;
             previewBadge.style.background = item.color || "#6366f1";
-            previewRatio.innerText = `비율: ${item.aspect_ratio || 1.0}`;
+            previewRatio.innerText = `비율: ${item.aspect || 1.0}`;
             previewName.innerText = item.filename;
             previewLink.href = item.path;
             previewCard.style.display = "block";
@@ -822,7 +987,7 @@
             // 1. Target: Full Opacity, Top RenderOrder, Scale highlight
             target.material.opacity = 1.0;
             target.renderOrder = 999;
-            target.scale.copy(item.originalScale).multiplyScalar(1.2);
+            target.scale.copy(item.currentScale).multiplyScalar(1.25);
 
             // 2. All other sprites: Fade to Ghost Mode (0.08 Opacity) to guarantee crystal clear view!
             sprites.forEach(s => {
@@ -831,7 +996,7 @@
                     new TWEEN.Tween(s.material)
                         .to({ opacity: 0.08 }, 300)
                         .start();
-                    s.scale.copy(s.userData.originalScale);
+                    s.scale.copy(s.userData.currentScale);
                 }
             });
 
@@ -840,8 +1005,8 @@
             if (camVector.length() < 1e-4) camVector.set(0, 0, 1);
             camVector.normalize();
 
-            // Safe comfortable viewing distance (prevents clipping through lens)
-            const safeDistance = 65;
+            // Safe comfortable viewing distance
+            const safeDistance = Math.max(nodeBaseSize * 3.5, 60);
             const targetCamPos = new THREE.Vector3().copy(target.position).addScaledVector(camVector, safeDistance);
 
             new TWEEN.Tween(camera.position)
@@ -860,7 +1025,7 @@
             focusBanner.style.display = "none";
             if (focusedSprite) {
                 focusedSprite.renderOrder = 0;
-                focusedSprite.scale.copy(focusedSprite.userData.originalScale);
+                focusedSprite.scale.copy(focusedSprite.userData.currentScale);
                 focusedSprite = null;
             }
             sprites.forEach(s => {
