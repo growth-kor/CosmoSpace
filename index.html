@@ -675,8 +675,17 @@
             <div id="total-count-badge" class="stats-badge" style="display:none;">0장</div>
         </div>
 
-        <div class="search-box">
-            <input type="text" id="search-input" placeholder="파일명 또는 카테고리 검색..." autocomplete="off">
+        <!-- Search & Folder Input Row -->
+        <div class="search-folder-row" style="display:flex; gap:8px; margin-bottom:12px;">
+            <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
+            <button class="tool-btn"
+                style="flex-shrink:0; padding:8px 14px; font-size:14px; font-weight:700; background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.25);"
+                onclick="document.getElementById('folder-input').click()" title="로컬 이미지 폴더 열기">
+                폴더 열기
+            </button>
+            <div class="search-box" style="margin-bottom:0; flex:1;">
+                <input type="text" id="search-input" placeholder="파일명 또는 카테고리 검색..." autocomplete="off">
+            </div>
         </div>
 
         <div id="filter-bar">
@@ -686,14 +695,10 @@
         </div>
     </div>
 
-    <!-- Controls Bar (Top Right) -->
+    <!-- Controls Bar (Top Right: 3D Viewport Controls ONLY) -->
     <div id="controls-bar">
-        <!-- Layout Mode Buttons & Folder Open -->
+        <!-- Layout Mode Buttons -->
         <div class="button-group-row">
-            <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
-            <button class="tool-btn" style="background:rgba(255,255,255,0.18); border-color:rgba(255,255,255,0.35);" onclick="document.getElementById('folder-input').click()">
-                📂 폴더 열기
-            </button>
             <button id="btn-mode-galaxy" class="tool-btn active-mode" onclick="switchLayout('galaxy')">폴더 행성계</button>
             <button id="btn-mode-sphere" class="tool-btn" onclick="switchLayout('sphere')">단일 구체</button>
             <button id="btn-mode-grid" class="tool-btn" onclick="switchLayout('grid')">격자 펼침</button>
