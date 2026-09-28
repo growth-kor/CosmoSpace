@@ -1168,6 +1168,7 @@
         const rotateSpeedSlider = document.getElementById("rotate-speed-slider");
         const rotateSpeedVal = document.getElementById("rotate-speed-val");
         const btnRotate = document.getElementById("btn-rotate");
+        const volumeItem = document.getElementById("volume-item");
         const volumeSlider = document.getElementById("volume-slider");
         const volumeVal = document.getElementById("volume-val");
         const btnSound = document.getElementById("btn-sound");
@@ -2056,9 +2057,11 @@
                 if (domainAudio) domainAudio.pause();
                 btnSound.innerText = "음소거";
                 btnSound.classList.add("active-mode");
+                if (volumeItem) volumeItem.style.display = "none";
             } else {
                 btnSound.innerText = "소리 켜짐";
                 btnSound.classList.remove("active-mode");
+                if (volumeItem) volumeItem.style.display = "flex";
                 if (currentGuideIdx === 4 && guideModal.style.display !== "none") {
                     playDomainSound();
                 }
