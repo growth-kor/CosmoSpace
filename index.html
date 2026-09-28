@@ -34,7 +34,11 @@
             text-rendering: optimizeLegibility;
         }
 
-        body, button, input, textarea, select {
+        body,
+        button,
+        input,
+        textarea,
+        select {
             font-family: 'Chosunilbo_myungjo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -668,13 +672,7 @@
     <div id="ui-overlay">
         <div class="header-title-row">
             <h1>Pinterest Galaxy</h1>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
-                <button class="tool-btn"
-                    style="padding:5px 12px; font-size:13.5px; font-weight:700; background:rgba(255,255,255,0.14); border-color:rgba(255,255,255,0.3);"
-                    onclick="document.getElementById('folder-input').click()">폴더 열기</button>
-                <div id="total-count-badge" class="stats-badge" style="font-size:13.5px; font-weight:700;">0장</div>
-            </div>
+            <div id="total-count-badge" class="stats-badge" style="display:none;">0장</div>
         </div>
 
         <div class="search-box">
@@ -683,15 +681,19 @@
 
         <div id="filter-bar">
             <button class="filter-btn active" data-category="ALL" onclick="filterCategory('ALL')">
-                <span class="dot" style="background:#818cf8;"></span>전체보기
+                <span class="dot" style="background:#ffffff;"></span>전체보기
             </button>
         </div>
     </div>
 
     <!-- Controls Bar (Top Right) -->
     <div id="controls-bar">
-        <!-- Layout Mode Buttons -->
+        <!-- Layout Mode Buttons & Folder Open -->
         <div class="button-group-row">
+            <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
+            <button class="tool-btn" style="background:rgba(255,255,255,0.18); border-color:rgba(255,255,255,0.35);" onclick="document.getElementById('folder-input').click()">
+                📂 폴더 열기
+            </button>
             <button id="btn-mode-galaxy" class="tool-btn active-mode" onclick="switchLayout('galaxy')">폴더 행성계</button>
             <button id="btn-mode-sphere" class="tool-btn" onclick="switchLayout('sphere')">단일 구체</button>
             <button id="btn-mode-grid" class="tool-btn" onclick="switchLayout('grid')">격자 펼침</button>
@@ -1055,6 +1057,7 @@
             clearCurrentGalaxy();
 
             const totalItems = dataList.length;
+            totalBadge.style.display = totalItems > 0 ? "inline-block" : "none";
             totalBadge.innerText = `${totalItems}장`;
             loadingOverlay.style.display = "flex";
             loadingOverlay.style.opacity = "1";
@@ -1309,7 +1312,6 @@
             .catch(() => {
                 loadingOverlay.style.opacity = "0";
                 setTimeout(() => loadingOverlay.style.display = "none", 400);
-                totalBadge.innerText = "폴더를 열어주세요";
             });
 
         function updateSpriteScale(sprite, aspect, baseSize) {
