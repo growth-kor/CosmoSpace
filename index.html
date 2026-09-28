@@ -29,17 +29,16 @@
             box-sizing: border-box;
             user-select: none;
             font-family: 'DeltaGlassKR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: subpixel-antialiased;
+            text-rendering: geometricPrecision;
         }
 
         body, button, input, textarea, select {
             font-family: 'DeltaGlassKR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            text-rendering: optimizeLegibility;
-            letter-spacing: 0.15px;
+            -webkit-font-smoothing: subpixel-antialiased;
+            text-rendering: geometricPrecision;
+            -webkit-text-stroke: 0.25px #ffffff;
+            letter-spacing: 0.3px;
         }
 
         body {
@@ -122,14 +121,16 @@
             padding: 9px 14px;
             border-radius: 10px;
             color: #fff;
-            font-size: 13.5px;
+            font-size: 15px;
+            font-weight: 600;
             outline: none;
             transition: all 0.2s ease;
             font-family: inherit;
         }
 
         .search-box input::placeholder {
-            color: rgba(255, 255, 255, 0.45);
+            color: rgba(255, 255, 255, 0.55);
+            font-weight: 500;
         }
 
         .search-box input:focus {
@@ -143,7 +144,7 @@
             left: 11px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 13px;
+            font-size: 14px;
             color: var(--text-muted);
             pointer-events: none;
         }
@@ -169,12 +170,12 @@
 
         .filter-btn {
             background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            color: #f1f5f9;
-            padding: 5px 11px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 6px 12px;
             border-radius: 14px;
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 14px;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
@@ -186,11 +187,11 @@
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #cbd5e1;
+            background: #ffffff;
         }
 
         .filter-btn:hover {
-            background: rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.22);
             color: #fff;
             transform: translateY(-1px);
         }
@@ -200,6 +201,7 @@
             border-color: #ffffff;
             color: #08090b;
             font-weight: 700;
+            -webkit-text-stroke: 0.25px #08090b;
             box-shadow: 0 2px 8px rgba(255, 255, 255, 0.14);
         }
 
@@ -231,14 +233,14 @@
             backdrop-filter: blur(16px);
             border: 1px solid var(--border-glass);
             color: #ffffff;
-            padding: 8px 14px;
-            border-radius: 11px;
-            font-size: 13.5px;
-            font-weight: 600;
+            padding: 9px 16px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             transition: all 0.2s ease;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
         }
@@ -255,6 +257,7 @@
             border-color: #ffffff;
             color: #08090b;
             font-weight: 700;
+            -webkit-text-stroke: 0.25px #08090b;
             box-shadow: 0 2px 10px rgba(255, 255, 255, 0.15);
         }
 
@@ -264,9 +267,9 @@
             backdrop-filter: blur(16px);
             border: 1px solid var(--border-glass);
             border-radius: 12px;
-            padding: 9px 16px;
+            padding: 10px 18px;
             display: flex;
-            gap: 16px;
+            gap: 18px;
             align-items: center;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
         }
@@ -275,17 +278,17 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 13.5px;
-            font-weight: 600;
+            font-size: 15.5px;
+            font-weight: 700;
             color: #ffffff;
-            letter-spacing: -0.01em;
+            letter-spacing: 0.2px;
         }
 
         .slider-item input[type="range"] {
             -webkit-appearance: none;
-            width: 90px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.2);
+            width: 95px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.25);
             border-radius: 4px;
             outline: none;
             cursor: pointer;
@@ -293,8 +296,8 @@
 
         .slider-item input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 14px;
-            height: 14px;
+            width: 15px;
+            height: 15px;
             border-radius: 50%;
             background: #ffffff;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
@@ -307,10 +310,10 @@
         }
 
         .val-badge {
-            font-size: 12.5px;
-            font-weight: 600;
-            color: #cbd5e1;
-            min-width: 34px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            min-width: 36px;
         }
 
         /* Focus Mode Status Bar */
@@ -669,9 +672,9 @@
             <div style="display:flex; align-items:center; gap:8px;">
                 <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
                 <button class="tool-btn"
-                    style="padding:4px 9px; font-size:11px; background:rgba(99,102,241,0.25); border-color:rgba(129,140,248,0.5);"
+                    style="padding:5px 12px; font-size:13.5px; font-weight:700; background:rgba(255,255,255,0.14); border-color:rgba(255,255,255,0.3);"
                     onclick="document.getElementById('folder-input').click()">폴더 열기</button>
-                <div id="total-count-badge" class="stats-badge">0장</div>
+                <div id="total-count-badge" class="stats-badge" style="font-size:13.5px; font-weight:700;">0장</div>
             </div>
         </div>
 

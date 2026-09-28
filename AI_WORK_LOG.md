@@ -7,23 +7,23 @@
   - 사용자 지정 눈누 DeltaGlassKR 서체(`@font-face`)를 웹 전역(body, button, input, badge, modal)에 100% 통일 적용.
   - 서체 자체의 작은 글리프 특성(Regular 400 단일 굵기)으로 인한 11~12px 크기에서의 자형 뭉개짐 및 저시인성 결함 분석 및 해결.
 - **[기종 불문 가독성/선명도 하드웨어 보정]**:
-  - 13인치 맥북 레티나뿐만 아니라 윈도우 일반 모니터(96 DPI), 외장 4K 모니터 등 전 기종에서 글자가 번지거나 흐려 보이지 않도록 렌더링 엔진 레벨 튜닝:
-    - `-webkit-font-smoothing: antialiased;`
-    - `-moz-osx-font-smoothing: grayscale;`
-    - `text-rendering: optimizeLegibility;`
-  - 기존 11px~12px의 초소형 폰트를 13px~15px로 정밀 스케일업.
-  - 딥 스페이스 다크 배경과의 명도 대비(Contrast Ratio)를 극대화하기 위해 흐릿한 슬레이트 그레이를 순백 티타늄 화이트(`#ffffff`) 및 고대비(`#cbd5e1`)로 전면 보정.
+  - 서체 자체의 얇은 획(Light-Hairline)과 30% 작은 글리프 크기로 인해 검은 배경에서 번지던 현상을 코드로 100% 극복:
+    - `-webkit-text-stroke: 0.25px #ffffff;` 텍스트 외곽선 마이크로 보강을 적용하여 가느다란 획의 뼈대를 단단하고 또렷하게 강화.
+    - `-webkit-font-smoothing: subpixel-antialiased;` 및 `text-rendering: geometricPrecision;`을 적용하여 픽셀 뭉개짐 원천 차단.
+    - 슬라이더 및 모드 버튼 텍스트를 `15px ~ 15.5px`로 체감 크기 1:1 보정.
+    - 순백색 티타늄 명도(`#ffffff`) 100% 주입 및 자간(`letter-spacing: 0.2~0.3px`) 최적화.
 - **[UI 컴포넌트 폰트 스케일링 전수 적용]**:
-  - 헤더 & 통계 배지: 22px / 13px (굵기 700)
-  - 검색창 & 필터 태그 버튼: 13.5px / 13px
-  - 3D 레이아웃 모드 버튼 & 조망/회전 툴 버튼: 13px
-  - 은하 팽창 / 노드 크기 / 배경 흐림 슬라이더 패널 & 수치 배지: 13.5px / 12.5px
+  - 헤더 & 통계 배지: 22px / 13.5px (굵기 700)
+  - 폴더 열기 버튼: 13.5px (굵기 700, 티타늄 글래스 모노크롬)
+  - 검색창 & 필터 태그 버튼: 15px / 14px (굵기 700)
+  - 3D 레이아웃 모드 버튼 & 조망/회전 툴 버튼: 15px (굵기 700)
+  - 은하 팽창 / 노드 크기 / 배경 흐림 슬라이더 패널 & 수치 배지: 15.5px / 14px (굵기 700)
   - 포커스 모드 상단 배너: 14px
   - 우측 하단 프리뷰 카드 (파일명, 카테고리 배지, 비율, 액션 버튼): 14.5px / 12.5px / 12.5px
   - 대형 라이트박스 팝업 (파일명, 카테고리 태그): 15px / 13px
 
 ### 2. 코드 및 검증 결과
-- `index.html`: Node.js 구문 및 서체 임포트 검사 통과 (HTML 바이트: 82,179B, DeltaGlassKR 포함 여부: true).
+- `index.html`: Node.js 구문 및 서체 임포트 검사 통과 (HTML 바이트: 82,364B, DeltaGlassKR 포함 여부: true).
 
 ## [19차] 2026-09-28: 브라우저 탭 크래시(Aw Snap) 원천 차단 - 고화질 캔버스 썸네일 압축 및 폴더별 3D 구체 행성계(Spherical Planets) 엔진 완비
 
