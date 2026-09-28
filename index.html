@@ -823,7 +823,8 @@
         </div>
 
         <div id="filter-bar">
-            <button class="filter-btn active" data-category="ALL" onclick="filterCategory('ALL')">
+            <button class="filter-btn active" data-category="ALL" onclick="filterCategory('ALL')"
+                onpointerenter="setPlanetHoverSpotlight('ALL')" onpointerleave="clearPlanetHoverSpotlight()">
                 <span class="dot" style="background:#ffffff;"></span>전체보기
             </button>
         </div>
@@ -1303,6 +1304,8 @@
                 const color = getCategoryColor(cat);
                 btn.innerHTML = `<span class="dot" style="background:${color};"></span>${cat}`;
                 btn.onclick = () => filterCategory(cat);
+                btn.onpointerenter = () => setPlanetHoverSpotlight(cat);
+                btn.onpointerleave = () => clearPlanetHoverSpotlight();
                 filterBar.appendChild(btn);
             });
 
@@ -1844,6 +1847,51 @@
 
         // Multi-Select Category Filter Logic
         const selectedCategories = new Set(["ALL"]);
+        let hoveredCategory = null;
+
+        // 🌟 [호버 스포트라이트]: 폴더 버튼에 마우스 올리면 해당 행성만 100% 또렷하게 빛나고, 다른 행성은 은은하게 사라짐
+        window.setPlanetHoverSpotlight = function (catName) {
+            if (currentLayout !== 'galaxy' && currentLayout !== 'sphere') return;
+            hoveredCategory = catName;
+
+            sprites.forEach(sprite => {
+                const isTarget = (catName === "ALL") || (sprite.userData && sprite.userData.category === catName);
+                new TWEEN.Tween(sprite.material)
+                    .to({ opacity: isTarget ? 1.0 : 0.08 }, 220)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .start();
+            });
+
+            // 3D 텍스트 라벨도 해당 폴더 라벨만 또렷하게 강조
+            planetLabels.forEach(lbl => {
+                const isTarget = (catName === "ALL") || (lbl.userData && lbl.userData.category === catName);
+                new TWEEN.Tween(lbl.material)
+                    .to({ opacity: isTarget ? 1.0 : 0.1 }, 220)
+                    .start();
+            });
+        };
+
+        window.clearPlanetHoverSpotlight = function () {
+            if (!hoveredCategory) return;
+            hoveredCategory = null;
+
+            sprites.forEach(sprite => {
+                if (sprite.visible) {
+                    new TWEEN.Tween(sprite.material)
+                        .to({ opacity: 1.0 }, 250)
+                        .easing(TWEEN.Easing.Cubic.Out)
+                        .start();
+                }
+            });
+
+            planetLabels.forEach(lbl => {
+                if (lbl.visible) {
+                    new TWEEN.Tween(lbl.material)
+                        .to({ opacity: 0.9 }, 250)
+                        .start();
+                }
+            });
+        };
 
         window.filterCategory = function (catName) {
             if (catName === "ALL") {
