@@ -642,32 +642,31 @@
             border-color: rgba(255, 255, 255, 0.35);
         }
 
-        /* --- Onboarding Simple Guide Card --- */
+        /* --- Onboarding Simple Guide Card (빈 우주 화면에 자연스럽게 떠 있는 미니멀 위젯) --- */
         #guide-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(4, 5, 8, 0.72);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 500;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
             display: none;
             align-items: center;
             justify-content: center;
-            animation: fadeIn 0.25s ease;
+            pointer-events: auto;
+            animation: fadeIn 0.3s ease;
         }
 
         .guide-box {
             position: relative;
             width: 90vw;
-            max-width: 420px;
-            background: rgba(18, 20, 24, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            border-radius: 18px;
+            max-width: 440px;
+            background: rgba(14, 16, 20, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 20px;
             padding: 26px 28px 22px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.1);
             color: #ffffff;
             user-select: none;
         }
@@ -1220,6 +1219,7 @@
         // 데이터 리스트를 Three.js 3D 공간에 렌더링 (대용량 2,000+장 브라우저 프리징 방지 청크 로딩)
         function loadGalaxyItems(dataList) {
             clearCurrentGalaxy();
+            closeGuideModal();
 
             const totalItems = dataList.length;
             totalBadge.style.display = totalItems > 0 ? "inline-block" : "none";
