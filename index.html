@@ -638,7 +638,9 @@
             <h1>Pinterest Galaxy</h1>
             <div style="display:flex; align-items:center; gap:8px;">
                 <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
-                <button class="tool-btn" style="padding:4px 9px; font-size:11px; background:rgba(99,102,241,0.25); border-color:rgba(129,140,248,0.5);" onclick="document.getElementById('folder-input').click()">폴더 열기</button>
+                <button class="tool-btn"
+                    style="padding:4px 9px; font-size:11px; background:rgba(99,102,241,0.25); border-color:rgba(129,140,248,0.5);"
+                    onclick="document.getElementById('folder-input').click()">폴더 열기</button>
                 <div id="total-count-badge" class="stats-badge">0장</div>
             </div>
         </div>
@@ -658,8 +660,8 @@
     <div id="controls-bar">
         <!-- Layout Mode Buttons -->
         <div class="button-group-row">
-            <button id="btn-mode-galaxy" class="tool-btn active-mode" onclick="switchLayout('galaxy')">은하 군집</button>
-            <button id="btn-mode-sphere" class="tool-btn" onclick="switchLayout('sphere')">구체 표면</button>
+            <button id="btn-mode-galaxy" class="tool-btn active-mode" onclick="switchLayout('galaxy')">폴더 행성계</button>
+            <button id="btn-mode-sphere" class="tool-btn" onclick="switchLayout('sphere')">단일 구체</button>
             <button id="btn-mode-grid" class="tool-btn" onclick="switchLayout('grid')">격자 펼침</button>
             <button class="tool-btn" onclick="resetCameraView()">조망</button>
             <button class="tool-btn" onclick="toggleAutoRotate()">회전</button>
@@ -817,12 +819,53 @@
         const dimVal = document.getElementById("dim-val");
 
         // 🌟 100% 브라우저 순수 클라이언트 은하 데이터 구축 및 렌더러
+        // 🪐 행성 구체 메타데이터 & 3D 네온 라벨 보관소
+        const planetMetaMap = new Map();
+        const planetLabels = [];
+
+        // 텍스트를 담은 3D 네온 빌보드 스프라이트 생성기
+        function createPlanetLabelSprite(text, count, colorHex) {
+            const canvas = document.createElement("canvas");
+            canvas.width = 512;
+            canvas.height = 128;
+            const ctx = canvas.getContext("2d");
+
+            // 배경 네온 필박스
+            ctx.fillStyle = "rgba(15, 18, 28, 0.85)";
+            ctx.strokeStyle = colorHex || "#818cf8";
+            ctx.lineWidth = 4;
+            const r = 24;
+            ctx.beginPath();
+            ctx.roundRect(16, 16, 480, 96, r);
+            ctx.fill();
+            ctx.stroke();
+
+            // 네온 글로우 텍스트
+            ctx.shadowColor = colorHex || "#818cf8";
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 34px 'Pretendard', sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            const labelStr = `${text} (${count}장)`;
+            ctx.fillText(labelStr, 256, 64);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+            const sprite = new THREE.Sprite(mat);
+            sprite.scale.set(140, 35, 1);
+            return sprite;
+        }
+
+        // 🌟 은하 데이터 및 메모리 완전 정리
         function clearCurrentGalaxy() {
             // 이전 스프라이트 메모리 해제 및 씬 정리
             sprites.forEach(s => {
                 if (s.material) {
                     if (s.material.map && s.material.map.isBlobUrl) {
-                        URL.revokeObjectURL(s.material.map.image.src);
+                        try { URL.revokeObjectURL(s.material.map.image.src); } catch (e) { }
                         s.material.map.dispose();
                     }
                     s.material.dispose();
@@ -830,6 +873,18 @@
                 scene.remove(s);
             });
             sprites.length = 0;
+
+            // 행성 3D 라벨 정리
+            planetLabels.forEach(lbl => {
+                if (lbl.material) {
+                    if (lbl.material.map) lbl.material.map.dispose();
+                    lbl.material.dispose();
+                }
+                scene.remove(lbl);
+            });
+            planetLabels.length = 0;
+            planetMetaMap.clear();
+
             categories.clear();
             selectedCategories.clear();
             selectedCategories.add("ALL");
@@ -847,7 +902,7 @@
             exitFocusMode();
         }
 
-        // 🪐 [폴더 행성계 알고리즘]: 사진 개수에 비례하는 구체 표면적 + 피보나치 무충돌 균등 배치
+        // 🪐 [폴더 행성계 알고리즘]: 각 폴더를 3D 우주 공간에 독립된 구체 행성으로 수학적 완벽 배치
         function generatePlanetaryGalaxyCoordinates(items) {
             // 1. 카테고리(하위 폴더)별 그룹화
             const catMap = new Map();
@@ -861,19 +916,22 @@
             let planetIdx = 0;
             const goldenAngle = Math.PI * (3 - Math.sqrt(5));
 
+            let cumulativeOrbit = 0;
             catMap.forEach((pItems, catName) => {
                 const pCount = pItems.length;
-                // 사진 개수(pCount)에 비례하는 행성 구체 반지름 (사진이 많아도 겹침 0%)
-                const planetRadius = Math.max(30, Math.sqrt(pCount) * 18.5);
+                // 사진 개수에 비례하는 구체 행성 반지름 (표면 배치로 겹침 0%)
+                const planetRadius = Math.max(55, Math.sqrt(pCount) * 23.0) * sphereRadiusScale;
+                const catColor = getCategoryColor(catName);
 
-                // 우주 은하 나선 궤도상에 각 행성 중심점(Center) 배치
+                // 우주 은하 나선 궤도상에 각 행성 중심점(Center) 배치 (행성 간 충돌 방지 안전거리 확보)
                 let center;
                 if (totalPlanets === 1) {
                     center = new THREE.Vector3(0, 0, 0);
                 } else {
-                    const orbitDist = Math.max(180, 220 * Math.sqrt(planetIdx + 1.2));
-                    const angle = planetIdx * 2.39996; // 균등 분산 나선 각도
-                    const height = (Math.sin(planetIdx * 1.5) * 110);
+                    cumulativeOrbit += (planetRadius * 1.5 + 280);
+                    const orbitDist = Math.max(260, cumulativeOrbit * 0.7);
+                    const angle = planetIdx * 2.39996; // 황금비 분산 나선 각도
+                    const height = (Math.sin(planetIdx * 1.4) * (planetRadius * 0.45));
                     center = new THREE.Vector3(
                         Math.cos(angle) * orbitDist,
                         height,
@@ -881,7 +939,22 @@
                     );
                 }
 
-                // 행성 표면에 피보나치 구면 알고리즘으로 사진들을 오차 0% 균등 배치
+                planetMetaMap.set(catName, {
+                    name: catName,
+                    center: center.clone(),
+                    radius: planetRadius,
+                    count: pCount,
+                    color: catColor
+                });
+
+                // 행성 상단에 은은한 3D 네온 폴더명 라벨 배치
+                const labelSprite = createPlanetLabelSprite(catName, pCount, catColor);
+                labelSprite.position.set(center.x, center.y + planetRadius + 32, center.z);
+                labelSprite.userData = { category: catName, isPlanetLabel: true };
+                scene.add(labelSprite);
+                planetLabels.push(labelSprite);
+
+                // 행성 표면에 피보나치 구면 알고리즘으로 사진들을 오차 0% 완벽한 균등 간격 배치
                 pItems.forEach((it, i) => {
                     const theta = i * goldenAngle;
                     const phi = Math.acos(1 - 2 * (i + 0.5) / pCount);
@@ -893,12 +966,56 @@
                     it.x = center.x + lx;
                     it.y = center.y + ly;
                     it.z = center.z + lz;
+                    it.planetCenter = center.clone();
+                    it.planetRadius = planetRadius;
                 });
 
                 planetIdx++;
             });
 
             return items;
+        }
+
+        // 🚀 인메모리 고속 캔버스 썸네일 압축 엔진 (300px 고화질 WebP, VRAM 폭발 원천 차단)
+        function createThumbnailBlob(file, maxDim = 300) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                const tempUrl = URL.createObjectURL(file);
+                img.onload = () => {
+                    const origW = img.naturalWidth || img.width || 300;
+                    const origH = img.naturalHeight || img.height || 300;
+                    let w = origW, h = origH;
+                    if (w > h) {
+                        if (w > maxDim) {
+                            h = Math.round((h * maxDim) / w);
+                            w = maxDim;
+                        }
+                    } else {
+                        if (h > maxDim) {
+                            w = Math.round((w * maxDim) / h);
+                            h = maxDim;
+                        }
+                    }
+                    const canvas = document.createElement("canvas");
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext("2d");
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = "high";
+                    ctx.drawImage(img, 0, 0, w, h);
+                    URL.revokeObjectURL(tempUrl);
+
+                    canvas.toBlob((blob) => {
+                        const thumbUrl = blob ? URL.createObjectURL(blob) : tempUrl;
+                        const aspect = Math.round((origW / Math.max(origH, 1)) * 100) / 100;
+                        resolve({ thumbUrl, aspect });
+                    }, "image/webp", 0.85);
+                };
+                img.onerror = () => {
+                    resolve({ thumbUrl: tempUrl, aspect: 1.0 });
+                };
+                img.src = tempUrl;
+            });
         }
 
         // 데이터 리스트를 Three.js 3D 공간에 렌더링 (대용량 2,000+장 브라우저 프리징 방지 청크 로딩)
@@ -942,8 +1059,8 @@
                 filterBar.appendChild(btn);
             });
 
-            // 🚀 브라우저 메인 스레드 멈춤 방지: 60장씩 requestAnimationFrame 배치로 분할 로드
-            const BATCH_SIZE = 60;
+            // 🚀 브라우저 메인 스레드 프리징 방지: 50장씩 requestAnimationFrame 배치로 텍스처 로드
+            const BATCH_SIZE = 50;
             let currentIdx = 0;
 
             function processBatch() {
@@ -1002,53 +1119,129 @@
             requestAnimationFrame(processBatch);
         }
 
-        // 📂 [폴더 선택 브라우저 직독]: 파이썬 0% 완전 브라우저 독립 실행
+        // 📂 [폴더 선택 브라우저 직독 & 스마트 썸네일 엔진]: 파이썬 0% 완전 브라우저 독립 실행
         async function handleFolderSelection(fileList) {
             if (!fileList || fileList.length === 0) return;
 
+            const allFiles = Array.from(fileList);
             const validExts = ['.jpg', '.jpeg', '.png', '.webp', '.avif'];
-            const rawFiles = Array.from(fileList).filter(f => {
+
+            // 1. 기존 galaxy_data.json 및 thumbnails/가 포함된 폴더인지 스마트 감지
+            const jsonFile = allFiles.find(f => f.name.toLowerCase() === "galaxy_data.json");
+            const thumbFiles = allFiles.filter(f => f.webkitRelativePath && f.webkitRelativePath.includes("/thumbnails/"));
+
+            if (jsonFile && thumbFiles.length > 0) {
+                // 🌟 [초고속 스마트 로드]: 기존에 캐시된 썸네일과 UMAP 은하 좌표가 있으므로 0.1초 만에 즉시 로드!
+                loadingOverlay.style.display = "flex";
+                loadingOverlay.style.opacity = "1";
+                document.getElementById("loading-text").innerText = "기존 은하 데이터 고속 복원 중...";
+                progressBarFill.style.width = "40%";
+
+                try {
+                    const jsonText = await jsonFile.text();
+                    const rawData = JSON.parse(jsonText);
+
+                    // 썸네일 파일 맵 구축
+                    const thumbMap = new Map();
+                    thumbFiles.forEach(tf => {
+                        const norm = tf.webkitRelativePath.replace(/\\/g, '/');
+                        thumbMap.set(norm, tf);
+                        // 파일명으로도 보조 매핑
+                        thumbMap.set(tf.name, tf);
+                    });
+
+                    // 원본 파일 맵 구축
+                    const origMap = new Map();
+                    allFiles.forEach(f => {
+                        const norm = (f.webkitRelativePath || f.name).replace(/\\/g, '/');
+                        origMap.set(norm, f);
+                        origMap.set(f.name, f);
+                    });
+
+                    const processedData = rawData.map(it => {
+                        const tFile = thumbMap.get(it.thumb_path) || thumbMap.get(it.thumb_path ? it.thumb_path.split('/').pop() : "");
+                        const oFile = origMap.get(it.path) || origMap.get(it.filename);
+                        const tUrl = tFile ? URL.createObjectURL(tFile) : it.thumb_path;
+                        const oUrl = oFile ? URL.createObjectURL(oFile) : (tUrl || it.path);
+
+                        return {
+                            ...it,
+                            thumb_path: tUrl,
+                            path: oUrl,
+                            isBlob: true,
+                            fileObj: oFile
+                        };
+                    });
+
+                    // 폴더별 행성계 3D 좌표 산출
+                    const galaxyItems = generatePlanetaryGalaxyCoordinates(processedData);
+                    loadGalaxyItems(galaxyItems);
+                    return;
+                } catch (err) {
+                    console.warn("기존 JSON 파싱 실패, 신규 폴더 분석 모드로 전환:", err);
+                }
+            }
+
+            // 2. 신규 사진 폴더 (또는 일반 사진들) ➔ 고화질 인메모리 캔버스 썸네일 압축 파이프라인
+            const rawPhotoFiles = allFiles.filter(f => {
                 const name = f.name.toLowerCase();
-                return validExts.some(ext => name.endsWith(ext)) && !f.webkitRelativePath.includes('/.') && !f.webkitRelativePath.includes('/thumbnails/');
+                const rel = (f.webkitRelativePath || f.name).toLowerCase();
+                return validExts.some(ext => name.endsWith(ext)) && !rel.includes('/.') && !rel.includes('/thumbnails/');
             });
 
-            if (rawFiles.length === 0) {
+            if (rawPhotoFiles.length === 0) {
                 alert("선택한 폴더에 지원되는 이미지(.jpg, .png, .webp, .avif)가 없습니다.");
                 return;
             }
 
             loadingOverlay.style.display = "flex";
             loadingOverlay.style.opacity = "1";
-            document.getElementById("loading-text").innerText = "사진 폴더 분석 중...";
-            progressBarFill.style.width = "10%";
-            progressSub.innerText = `${rawFiles.length}장의 사진 감지`;
+            document.getElementById("loading-text").innerText = "고화질 썸네일 압축 중...";
+            progressBarFill.style.width = "0%";
+            progressSub.innerText = `0 / ${rawPhotoFiles.length} (0%)`;
 
             const parsedItems = [];
-            for (let f of rawFiles) {
-                const relPath = f.webkitRelativePath || f.name;
-                const parts = relPath.split('/');
-                let category = "기본";
-                if (parts.length > 2) {
-                    category = parts[1]; // 하위 폴더명을 카테고리로 지정
-                } else if (parts.length === 2) {
-                    category = parts[0];
-                }
+            const THUMB_BATCH = 10;
+            const totalCount = rawPhotoFiles.length;
 
-                const blobUrl = URL.createObjectURL(f);
-                parsedItems.push({
-                    filename: f.name,
-                    path: blobUrl,
-                    thumb_path: blobUrl,
-                    category: category,
-                    aspect_ratio: 1.0,
-                    isBlob: true,
-                    fileObj: f
+            for (let i = 0; i < totalCount; i += THUMB_BATCH) {
+                const slice = rawPhotoFiles.slice(i, i + THUMB_BATCH);
+                const batchPromises = slice.map(async (f) => {
+                    const relPath = f.webkitRelativePath || f.name;
+                    const parts = relPath.split('/');
+                    let category = "기본";
+                    if (parts.length > 2) {
+                        category = parts[1]; // 하위 폴더명을 카테고리로 지정
+                    } else if (parts.length === 2) {
+                        category = parts[0];
+                    }
+
+                    // 300px 고화질 WebP 인메모리 캔버스 압축 (VRAM 폭발 0%)
+                    const { thumbUrl, aspect } = await createThumbnailBlob(f, 300);
+
+                    return {
+                        filename: f.name,
+                        path: thumbUrl, // 초기에는 썸네일 주소, 필요 시 fileObj로부터 원본 스왑
+                        thumb_path: thumbUrl,
+                        category: category,
+                        aspect_ratio: aspect,
+                        isBlob: true,
+                        fileObj: f
+                    };
                 });
+
+                const batchResults = await Promise.all(batchPromises);
+                parsedItems.push(...batchResults);
+
+                const currentDone = Math.min(i + THUMB_BATCH, totalCount);
+                const pct = Math.round((currentDone / totalCount) * 100);
+                progressBarFill.style.width = pct + "%";
+                progressSub.innerText = `${currentDone} / ${totalCount} (${pct}%)`;
             }
 
             // 🪐 폴더별 행성계 3D 좌표 즉시 연산 (수학 알고리즘)
-            const galaxyItems = generatePlanetaryGalaxyCoordinates(parsedItems);
             document.getElementById("loading-text").innerText = "3D 행성계 생성 중...";
+            const galaxyItems = generatePlanetaryGalaxyCoordinates(parsedItems);
             loadGalaxyItems(galaxyItems);
         }
 
@@ -1078,7 +1271,8 @@
                 return res.json();
             })
             .then(data => {
-                loadGalaxyItems(data);
+                const galaxyItems = generatePlanetaryGalaxyCoordinates(data);
+                loadGalaxyItems(galaxyItems);
             })
             .catch(() => {
                 loadingOverlay.style.opacity = "0";
@@ -1163,6 +1357,13 @@
             exitFocusMode();
             recalculateAllLayouts();
 
+            // 행성 3D 라벨은 폴더 행성계(galaxy) 모드일 때만 표시
+            planetLabels.forEach(lbl => {
+                const cat = lbl.userData.category;
+                const matchCat = selectedCategories.has("ALL") || selectedCategories.has(cat);
+                lbl.visible = (mode === 'galaxy') && matchCat;
+            });
+
             sprites.forEach(sprite => {
                 let targetPos;
                 if (mode === 'grid') targetPos = sprite.userData.gridPos;
@@ -1227,7 +1428,7 @@
                     .easing(TWEEN.Easing.Cubic.InOut)
                     .start();
             } else {
-                // 은하 군집 모드: 3D 자유 회전 및 이동
+                // 은하 군집 (폴더 행성계) 모드: 3D 자유 회전 및 이동
                 controls.enableRotate = true;
                 controls.enablePan = true;
                 controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
@@ -1354,7 +1555,33 @@
             applyFilters();
             recalculateAllLayouts();
 
-            if (currentLayout !== 'galaxy') {
+            // 행성 3D 라벨 가시성 동기화
+            planetLabels.forEach(lbl => {
+                const cat = lbl.userData.category;
+                lbl.visible = (currentLayout === 'galaxy') && (selectedCategories.has("ALL") || selectedCategories.has(cat));
+            });
+
+            if (currentLayout === 'galaxy') {
+                // 🚀 단일 폴더 선택 시 해당 행성 구체 앞으로 카메라 워프 비행 (Warp Flight)
+                if (selectedCategories.size === 1 && !selectedCategories.has("ALL")) {
+                    const selCat = Array.from(selectedCategories)[0];
+                    const meta = planetMetaMap.get(selCat);
+                    if (meta) {
+                        const targetCamZ = meta.center.z + Math.max(meta.radius * 2.3, 160);
+                        const targetCamY = meta.center.y + Math.max(meta.radius * 0.35, 25);
+                        new TWEEN.Tween(camera.position)
+                            .to({ x: meta.center.x, y: targetCamY, z: targetCamZ }, 900)
+                            .easing(TWEEN.Easing.Cubic.InOut)
+                            .start();
+                        new TWEEN.Tween(controls.target)
+                            .to({ x: meta.center.x, y: meta.center.y, z: meta.center.z }, 900)
+                            .easing(TWEEN.Easing.Cubic.InOut)
+                            .start();
+                    }
+                } else if (selectedCategories.has("ALL")) {
+                    resetCameraView();
+                }
+            } else {
                 sprites.forEach(sprite => {
                     if (sprite.visible) {
                         const target = (currentLayout === 'grid') ? sprite.userData.gridPos : sprite.userData.spherePos;
@@ -1492,7 +1719,16 @@
             previewCard.style.display = "block";
 
             // 🌟 [원본 화질 즉시 스왑]: 더블 클릭된 대상 1장만 3D 공간에서 고해상도 원본 텍스처로 교체!
-            const origPath = item.path;
+            let origPath = item.path;
+            if (item.fileObj && (!item.fullResUrl || item.path === item.thumb_path)) {
+                if (!item.fullResUrl) {
+                    item.fullResUrl = URL.createObjectURL(item.fileObj);
+                }
+                origPath = item.fullResUrl;
+                item.path = origPath;
+                previewImg.src = origPath;
+            }
+
             if (highResTextureCache.has(origPath)) {
                 target.material.map = highResTextureCache.get(origPath);
                 target.material.needsUpdate = true;
