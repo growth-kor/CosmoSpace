@@ -843,6 +843,7 @@
             });
 
             if (mode === 'grid') {
+                controls.enablePan = true;
                 const visibleCount = sprites.filter(s => s.visible).length;
                 const cols = Math.ceil(Math.sqrt(visibleCount * 1.5));
                 const rows = Math.ceil(visibleCount / cols);
@@ -859,8 +860,10 @@
                     .easing(TWEEN.Easing.Cubic.InOut)
                     .start();
             } else if (mode === 'sphere') {
+                // 구체 표면 모드: 구의 중심 (0,0,0) 시선 고정 & 시선 빗겨남 방지(enablePan 비활성화)
+                controls.enablePan = false;
                 new TWEEN.Tween(camera.position)
-                    .to({ x: 0, y: 80, z: 900 }, 1000)
+                    .to({ x: 0, y: 80, z: 920 }, 1000)
                     .easing(TWEEN.Easing.Cubic.InOut)
                     .start();
                 new TWEEN.Tween(controls.target)
@@ -868,6 +871,7 @@
                     .easing(TWEEN.Easing.Cubic.InOut)
                     .start();
             } else {
+                controls.enablePan = true;
                 resetCameraView();
             }
         };
@@ -1053,24 +1057,42 @@
                 }
             });
 
-            // 3. Smart Camera Vector: Dolly in along current line of sight with safe standoff distance
-            const camVector = new THREE.Vector3().subVectors(camera.position, target.position);
-            if (camVector.length() < 1e-4) camVector.set(0, 0, 1);
-            camVector.normalize();
+            // 3. Smart Camera Vector:
+            if (currentLayout === 'sphere') {
+                // 🎯 구체 표면 모드: 구의 중심(0, 0, 0)을 똑바로 바라보며 대상 사진 앞에 카메라를 정렬!
+                const radialDir = target.position.clone().normalize();
+                const safeDistance = Math.max(nodeBaseSize * 3.5, 70);
+                const targetCamPos = target.position.clone().addScaledVector(radialDir, safeDistance);
 
-            // Safe comfortable viewing distance
-            const safeDistance = Math.max(nodeBaseSize * 3.5, 60);
-            const targetCamPos = new THREE.Vector3().copy(target.position).addScaledVector(camVector, safeDistance);
+                new TWEEN.Tween(camera.position)
+                    .to({ x: targetCamPos.x, y: targetCamPos.y, z: targetCamPos.z }, 800)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .start();
 
-            new TWEEN.Tween(camera.position)
-                .to({ x: targetCamPos.x, y: targetCamPos.y, z: targetCamPos.z }, 800)
-                .easing(TWEEN.Easing.Cubic.Out)
-                .start();
+                // 시선 중심(Target)을 구의 중심 (0,0,0)으로 엄격 고정하여 옆으로 회전 시 항상 구 중심을 바라봄!
+                new TWEEN.Tween(controls.target)
+                    .to({ x: 0, y: 0, z: 0 }, 800)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .start();
+            } else {
+                // 일반 은하계 / 격자 모드
+                const camVector = new THREE.Vector3().subVectors(camera.position, target.position);
+                if (camVector.length() < 1e-4) camVector.set(0, 0, 1);
+                camVector.normalize();
 
-            new TWEEN.Tween(controls.target)
-                .to({ x: target.position.x, y: target.position.y, z: target.position.z }, 800)
-                .easing(TWEEN.Easing.Cubic.Out)
-                .start();
+                const safeDistance = Math.max(nodeBaseSize * 3.5, 60);
+                const targetCamPos = new THREE.Vector3().copy(target.position).addScaledVector(camVector, safeDistance);
+
+                new TWEEN.Tween(camera.position)
+                    .to({ x: targetCamPos.x, y: targetCamPos.y, z: targetCamPos.z }, 800)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .start();
+
+                new TWEEN.Tween(controls.target)
+                    .to({ x: target.position.x, y: target.position.y, z: target.position.z }, 800)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .start();
+            }
         }
 
         // Exit Focus Mode -> Restore 100% Opacity to all nodes
@@ -1134,6 +1156,12 @@
         function animate(time) {
             requestAnimationFrame(animate);
             TWEEN.update(time);
+
+            // 구체 표면 모드에서는 시선 피벗이 (0,0,0) 중심에서 이탈하지 않도록 락 유지
+            if (currentLayout === 'sphere' && !focusedSprite) {
+                controls.target.set(0, 0, 0);
+            }
+
             controls.update();
             renderer.render(scene, camera);
         }
