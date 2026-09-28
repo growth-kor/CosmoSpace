@@ -623,7 +623,7 @@
             <h1>🪐 Pinterest Galaxy</h1>
             <div id="total-count-badge" class="stats-badge">0장</div>
         </div>
-        <p class="sub-desc">더블 클릭: 사진 상세 보기 & 포커스 · 드래그: 자유 비행 탐색</p>
+        <p class="sub-desc">더블 클릭: 사진 상세 보기 · 드래그/WASD: 비행 이동 · [/]: 축소/확대</p>
         
         <div class="search-box">
             <span class="search-icon">🔍</span>
@@ -987,7 +987,7 @@
                 controls.enablePan = true;
                 controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
                 controls.touches.ONE = THREE.TOUCH.PAN;
-                if (subDescEl) subDescEl.innerText = "더블 클릭: 사진 상세 보기 · 좌클릭 드래그: 2D 캔버스 상하좌우 슬라이드 이동";
+                if (subDescEl) subDescEl.innerText = "더블 클릭: 사진 상세 보기 · 드래그/WASD: 2D 캔버스 상하좌우 이동 · [/]: 축소/확대";
 
                 spreadLabel.innerText = "🔲 격자 간격:";
                 spreadSlider.min = "0.5";
@@ -1039,7 +1039,7 @@
                 controls.enablePan = true;
                 controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
                 controls.touches.ONE = THREE.TOUCH.ROTATE;
-                if (subDescEl) subDescEl.innerText = "더블 클릭: 사진 상세 보기 & 포커스 · 드래그: 자유 비행 탐색";
+                if (subDescEl) subDescEl.innerText = "더블 클릭: 사진 상세 보기 · 드래그/WASD: 비행 이동 · [/]: 축소/확대";
 
                 spreadLabel.innerText = "🌌 은하 팽창:";
                 spreadSlider.min = "0.5";
@@ -1409,19 +1409,6 @@
             modal.style.display = "flex";
         };
 
-        window.closeLightbox = function() {
-            const modal = document.getElementById("lightbox-modal");
-            if (modal) modal.style.display = "none";
-        };
-
-        // ESC 키로 대형 뷰어 및 포커스 닫기
-        window.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") {
-                closeLightbox();
-                closePreview();
-            }
-        });
-
         window.resetCameraView = function() {
             exitFocusMode();
             let targetPos = DEFAULT_CAM_POS;
@@ -1459,13 +1446,99 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        // ⌨️ 키보드 네비게이션: W, A, S, D로 비행 이동 및 [ (축소/Zoom Out), ] (확대/Zoom In)
+        const keysPressed = {};
+        window.addEventListener("keydown", (e) => {
+            // 입력창(검색창 등)에 포커스가 있을 때는 키보드 단축키 비활성화
+            if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+
+            if (e.key === "Escape") {
+                closeLightbox();
+                closePreview();
+                return;
+            }
+
+            const key = e.key.toLowerCase();
+            keysPressed[key] = true;
+            keysPressed[e.key] = true;
+            keysPressed[e.code] = true;
+        });
+
+        window.addEventListener("keyup", (e) => {
+            const key = e.key.toLowerCase();
+            delete keysPressed[key];
+            delete keysPressed[e.key];
+            delete keysPressed[e.code];
+        });
+
+        // 윈도우 포커스를 잃으면 키 입력 초기화
+        window.addEventListener("blur", () => {
+            for (let k in keysPressed) delete keysPressed[k];
+        });
+
+        let lastTime = performance.now();
+
         // Main Animation Loop
         function animate(time) {
             requestAnimationFrame(animate);
             TWEEN.update(time);
 
-            // 구체 표면 모드에서는 시선 피벗이 (0,0,0) 중심에서 이탈하지 않도록 락 유지
-            if (currentLayout === 'sphere' && !focusedSprite) {
+            const now = performance.now();
+            const delta = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+
+            // 키보드 WASD 이동 & [ / ] 줌 로직
+            const isMoving = keysPressed['w'] || keysPressed['a'] || keysPressed['s'] || keysPressed['d'] ||
+                             keysPressed['KeyW'] || keysPressed['KeyA'] || keysPressed['KeyS'] || keysPressed['KeyD'] ||
+                             keysPressed['['] || keysPressed[']'] || keysPressed['BracketLeft'] || keysPressed['BracketRight'];
+
+            if (isMoving) {
+                // 카메라 거리에 비례하여 이동 속도를 동적으로 스케일링 (멀리 있을 땐 빠르게, 가까이선 정밀하게)
+                const distToTarget = camera.position.distanceTo(controls.target);
+                const moveSpeed = Math.max(distToTarget * 1.3, 160) * delta;
+                const zoomSpeed = Math.max(distToTarget * 1.5, 200) * delta;
+
+                // 카메라의 로컬 방향 벡터 (Right, Up, Forward)
+                const forward = new THREE.Vector3();
+                camera.getWorldDirection(forward);
+
+                const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+                const up = camera.up.clone().normalize();
+
+                const moveOffset = new THREE.Vector3();
+
+                // W / S: 앞/뒤 전진 및 후진 (또는 격자 모드에서는 상/하 스크롤 이동)
+                if (currentLayout === 'grid') {
+                    // 격자 2D 캔버스 모드에서는 W: 위, S: 아래, A: 왼쪽, D: 오른쪽
+                    if (keysPressed['w'] || keysPressed['KeyW']) moveOffset.addScaledVector(up, moveSpeed);
+                    if (keysPressed['s'] || keysPressed['KeyS']) moveOffset.addScaledVector(up, -moveSpeed);
+                    if (keysPressed['a'] || keysPressed['KeyA']) moveOffset.addScaledVector(right, -moveSpeed);
+                    if (keysPressed['d'] || keysPressed['KeyD']) moveOffset.addScaledVector(right, moveSpeed);
+                } else {
+                    // 3D 은하 및 구체 모드에서는 W: 시선 방향 전진, S: 후진, A: 좌측 이동, D: 우측 이동
+                    if (keysPressed['w'] || keysPressed['KeyW']) moveOffset.addScaledVector(forward, moveSpeed);
+                    if (keysPressed['s'] || keysPressed['KeyS']) moveOffset.addScaledVector(forward, -moveSpeed);
+                    if (keysPressed['a'] || keysPressed['KeyA']) moveOffset.addScaledVector(right, -moveSpeed);
+                    if (keysPressed['d'] || keysPressed['KeyD']) moveOffset.addScaledVector(right, moveSpeed);
+                }
+
+                // [ 키: 축소 (Zoom Out / 멀어지기)
+                if (keysPressed['['] || keysPressed['BracketLeft']) {
+                    moveOffset.addScaledVector(forward, -zoomSpeed);
+                }
+                // ] 키: 확대 (Zoom In / 당겨보기)
+                if (keysPressed[']'] || keysPressed['BracketRight']) {
+                    if (distToTarget > 25 || forward.dot(moveOffset) < 0) {
+                        moveOffset.addScaledVector(forward, zoomSpeed);
+                    }
+                }
+
+                camera.position.add(moveOffset);
+                controls.target.add(moveOffset);
+            }
+
+            // 구체 표면 모드에서는 시선 피벗이 (0,0,0) 중심에서 이탈하지 않도록 락 유지 (단, WASD 이동 없을 때)
+            if (currentLayout === 'sphere' && !focusedSprite && !isMoving) {
                 controls.target.set(0, 0, 0);
             }
 
