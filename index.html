@@ -186,6 +186,11 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            user-select: none;
+        }
+
+        .filter-btn * {
+            pointer-events: none;
         }
 
         .filter-btn .dot {
@@ -814,7 +819,7 @@
             <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
             <button class="tool-btn"
                 style="flex-shrink:0; padding:8px 14px; font-size:14px; font-weight:700; background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.25);"
-                onclick="document.getElementById('folder-input').click()" title="로컬 이미지 폴더 열기">
+                onclick="document.getElementById('folder-input').click()">
                 폴더 열기
             </button>
             <div class="search-box" style="margin-bottom:0; flex:1;">
@@ -823,8 +828,7 @@
         </div>
 
         <div id="filter-bar">
-            <button class="filter-btn active" data-category="ALL" onclick="filterCategory('ALL')"
-                onpointerenter="setPlanetHoverSpotlight('ALL')" onpointerleave="clearPlanetHoverSpotlight()">
+            <button class="filter-btn active" data-category="ALL" onclick="filterCategory('ALL')">
                 <span class="dot" style="background:#ffffff;"></span>전체보기
             </button>
         </div>
@@ -1314,8 +1318,6 @@
                 const color = getCategoryColor(cat);
                 btn.innerHTML = `<span class="dot" style="background:${color};"></span>${cat}`;
                 btn.onclick = () => filterCategory(cat);
-                btn.onpointerenter = () => setPlanetHoverSpotlight(cat);
-                btn.onpointerleave = () => clearPlanetHoverSpotlight();
                 filterBar.appendChild(btn);
             });
 
@@ -1864,53 +1866,101 @@
 
         // Multi-Select Category Filter Logic
         const selectedCategories = new Set(["ALL"]);
-        let hoveredCategory = null;
+        let activeHoveredCategory = null;
+        let spotlightClearTimer = null;
 
-        // 🌟 [호버 스포트라이트]: 폴더 버튼에 마우스 올리면 해당 행성만 100% 또렷하게 빛나고, 다른 행성은 은은하게 사라짐
+        // 🌟 [호버 스포트라이트]: 폴더 버튼에 마우스 올리면 해당 행성만 100% 완전 선명, 다른 모든 행성은 0.2초 만에 opacity: 0.08로 스무스하게 페이드아웃
         window.setPlanetHoverSpotlight = function (catName) {
-            if (currentLayout !== 'galaxy' && currentLayout !== 'sphere') return;
-            hoveredCategory = catName;
+            if (spotlightClearTimer) {
+                clearTimeout(spotlightClearTimer);
+                spotlightClearTimer = null;
+            }
+            if (activeHoveredCategory === catName) return;
+            activeHoveredCategory = catName;
+
+            const isAll = (catName === "ALL");
 
             sprites.forEach(sprite => {
-                const isTarget = (catName === "ALL") || (sprite.userData && sprite.userData.category === catName);
-                new TWEEN.Tween(sprite.material)
-                    .to({ opacity: isTarget ? 1.0 : 0.08 }, 220)
+                if (!sprite.visible && currentLayout !== 'galaxy' && currentLayout !== 'sphere') return;
+                const isTarget = isAll || (sprite.userData && sprite.userData.category === catName);
+                const targetOpacity = isTarget ? 1.0 : 0.08;
+
+                if (sprite._spotlightTween) {
+                    sprite._spotlightTween.stop();
+                }
+                sprite._spotlightTween = new TWEEN.Tween(sprite.material)
+                    .to({ opacity: targetOpacity }, 200)
                     .easing(TWEEN.Easing.Cubic.Out)
+                    .onComplete(() => { sprite._spotlightTween = null; })
                     .start();
             });
 
-            // 3D 텍스트 라벨도 해당 폴더 라벨만 또렷하게 강조
+            // 3D 라벨도 대상 폴더 행성 라벨만 또렷하게 강조, 나머지는 0.08
             planetLabels.forEach(lbl => {
-                const isTarget = (catName === "ALL") || (lbl.userData && lbl.userData.category === catName);
-                new TWEEN.Tween(lbl.material)
-                    .to({ opacity: isTarget ? 1.0 : 0.1 }, 220)
+                const isTarget = isAll || (lbl.userData && lbl.userData.category === catName);
+                const targetOpacity = isTarget ? 1.0 : 0.08;
+
+                if (lbl._spotlightTween) {
+                    lbl._spotlightTween.stop();
+                }
+                lbl._spotlightTween = new TWEEN.Tween(lbl.material)
+                    .to({ opacity: targetOpacity }, 200)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .onComplete(() => { lbl._spotlightTween = null; })
                     .start();
             });
         };
 
         window.clearPlanetHoverSpotlight = function () {
-            if (!hoveredCategory) return;
-            hoveredCategory = null;
+            if (spotlightClearTimer) clearTimeout(spotlightClearTimer);
+            // 마우스가 버튼들 사이를 빠르게 건너뛸 때 깜빡임 방지 디바운스
+            spotlightClearTimer = setTimeout(() => {
+                if (!activeHoveredCategory) return;
+                activeHoveredCategory = null;
 
-            sprites.forEach(sprite => {
-                if (sprite.visible) {
-                    new TWEEN.Tween(sprite.material)
-                        .to({ opacity: 1.0 }, 250)
+                // 포커스 모드 중이면 포커스 투명도 복원, 아니면 1.0 복원
+                const defaultOpacity = (focusedSprite) ? focusDimOpacity : 1.0;
+
+                sprites.forEach(sprite => {
+                    const targetOp = (sprite === focusedSprite) ? 1.0 : defaultOpacity;
+                    if (sprite._spotlightTween) {
+                        sprite._spotlightTween.stop();
+                    }
+                    sprite._spotlightTween = new TWEEN.Tween(sprite.material)
+                        .to({ opacity: targetOp }, 220)
                         .easing(TWEEN.Easing.Cubic.Out)
+                        .onComplete(() => { sprite._spotlightTween = null; })
                         .start();
-                }
-            });
+                });
 
-            planetLabels.forEach(lbl => {
-                if (lbl.visible) {
-                    new TWEEN.Tween(lbl.material)
-                        .to({ opacity: 0.9 }, 250)
+                planetLabels.forEach(lbl => {
+                    if (lbl._spotlightTween) {
+                        lbl._spotlightTween.stop();
+                    }
+                    lbl._spotlightTween = new TWEEN.Tween(lbl.material)
+                        .to({ opacity: 0.9 }, 220)
+                        .easing(TWEEN.Easing.Cubic.Out)
+                        .onComplete(() => { lbl._spotlightTween = null; })
                         .start();
-                }
-            });
+                });
+            }, 60);
         };
 
+        // 🌟 [이벤트 위임 영구 바인딩]: 동적으로 추가/삭제되는 모든 폴더 버튼의 호버를 100% 감지
+        const filterBarEl = document.getElementById("filter-bar");
+        filterBarEl.addEventListener("pointerover", (e) => {
+            const btn = e.target.closest(".filter-btn");
+            if (btn && btn.dataset.category) {
+                setPlanetHoverSpotlight(btn.dataset.category);
+            }
+        });
+        filterBarEl.addEventListener("pointerleave", () => {
+            clearPlanetHoverSpotlight();
+        });
+
         window.filterCategory = function (catName) {
+            if (spotlightClearTimer) clearTimeout(spotlightClearTimer);
+            activeHoveredCategory = null;
             if (catName === "ALL") {
                 selectedCategories.clear();
                 selectedCategories.add("ALL");
