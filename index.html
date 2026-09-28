@@ -699,7 +699,7 @@
         <div id="preview-name">filename.jpg</div>
         <div class="preview-btn-row">
             <button class="btn-tool-action" onclick="flyToCurrentPhoto()">사진 바로가기</button>
-            <button class="btn-tool-action" onclick="revealInFinder()">폴더 위치 열기</button>
+            <button class="btn-tool-action" onclick="copyCurrentImage(this)">이미지 복사</button>
             <button class="btn-tool-action" onclick="openLightbox()">대형 보기</button>
             <button class="btn-close-card" onclick="closePreview()">✕</button>
         </div>
@@ -716,7 +716,7 @@
                     <div id="lightbox-name" style="font-size:13px; font-weight:600; color:#e2e8f0;">filename.jpg</div>
                 </div>
                 <div class="lightbox-actions">
-                    <button class="btn-tool-action" onclick="revealInFinder()">폴더 위치 열기</button>
+                    <button class="btn-tool-action" onclick="copyCurrentImage(this)">이미지 복사</button>
                     <a id="lightbox-link" class="btn-full-view" href="#" target="_blank">새 탭 열기</a>
                 </div>
             </div>
@@ -1841,23 +1841,68 @@
             enterFocusMode(focusedSprite);
         };
 
-        // 📁 Mac Finder에서 실제 사진 파일 위치 열기
-        window.revealInFinder = function () {
+        // 📋 클립보드에 실제 이미지 직접 복사 (어디서나 Cmd+V / Ctrl+V 즉시 붙여넣기 지원)
+        window.copyCurrentImage = async function (btnEl) {
             if (!focusedSprite || !focusedSprite.userData) return;
-            const itemPath = focusedSprite.userData.path;
-            fetch("/api/reveal?path=" + encodeURIComponent(itemPath))
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'ok') {
-                        console.log("[Finder] 파일 위치 열기 완료:", itemPath);
-                    } else {
-                        alert("폴더 열기 실패: " + itemPath);
-                    }
-                })
-                .catch(err => {
-                    console.error("Finder API 오류:", err);
-                    alert("실제 파일 위치:\n" + itemPath);
+            const item = focusedSprite.userData;
+            const imgUrl = item.fullResUrl || item.path || item.thumb_path;
+            const originalText = btnEl ? btnEl.innerText : "이미지 복사";
+
+            if (btnEl) btnEl.innerText = "복사 중...";
+
+            try {
+                // 이미지를 메모리 Canvas에 그려서 클립보드 표준 image/png Blob으로 변환
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.src = imgUrl;
+                await new Promise((resolve, reject) => {
+                    if (img.complete) return resolve();
+                    img.onload = resolve;
+                    img.onerror = reject;
                 });
+
+                const canvas = document.createElement("canvas");
+                canvas.width = img.naturalWidth || img.width;
+                canvas.height = img.naturalHeight || img.height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0);
+
+                canvas.toBlob(async (blob) => {
+                    if (!blob) throw new Error("이미지 데이터 변환 실패");
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ "image/png": blob })
+                        ]);
+                        if (btnEl) {
+                            btnEl.innerText = "✓ 복사 완료!";
+                            btnEl.style.borderColor = "#10b981";
+                            btnEl.style.color = "#10b981";
+                            setTimeout(() => {
+                                btnEl.innerText = originalText;
+                                btnEl.style.borderColor = "";
+                                btnEl.style.color = "";
+                            }, 1800);
+                        }
+                    } catch (clipErr) {
+                        console.warn("ClipboardItem 이미지 복사 불가 (권한/브라우저 제한), 파일명 텍스트 복사 대체:", clipErr);
+                        await navigator.clipboard.writeText(item.filename);
+                        if (btnEl) {
+                            btnEl.innerText = "파일명 복사됨!";
+                            setTimeout(() => {
+                                btnEl.innerText = originalText;
+                            }, 1500);
+                        }
+                    }
+                }, "image/png");
+            } catch (err) {
+                console.error("이미지 복사 실패:", err);
+                if (btnEl) {
+                    btnEl.innerText = "복사 실패";
+                    setTimeout(() => {
+                        btnEl.innerText = originalText;
+                    }, 1500);
+                }
+            }
         };
 
         // 🔍 풀스크린 대형 라이트박스 뷰어 열기 / 닫기
