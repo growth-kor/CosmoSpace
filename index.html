@@ -29,10 +29,17 @@
             box-sizing: border-box;
             user-select: none;
             font-family: 'DeltaGlassKR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
         }
 
         body, button, input, textarea, select {
             font-family: 'DeltaGlassKR', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            letter-spacing: 0.15px;
         }
 
         body {
@@ -76,9 +83,9 @@
 
         h1 {
             margin: 0;
-            font-size: 19px;
+            font-size: 22px;
             font-weight: 800;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.3px;
             color: #ffffff;
             display: flex;
             align-items: center;
@@ -86,18 +93,18 @@
         }
 
         .stats-badge {
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 9px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 10px;
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #e2e8f0;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
         }
 
         .sub-desc {
             margin: 0 0 12px 0;
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-muted);
             line-height: 1.4;
         }
@@ -110,21 +117,25 @@
 
         .search-box input {
             width: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 9px 14px;
             border-radius: 10px;
             color: #fff;
-            font-size: 12.5px;
+            font-size: 13.5px;
             outline: none;
             transition: all 0.2s ease;
             font-family: inherit;
         }
 
+        .search-box input::placeholder {
+            color: rgba(255, 255, 255, 0.45);
+        }
+
         .search-box input:focus {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.35);
-            box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
         }
 
         .search-icon {
@@ -132,7 +143,7 @@
             left: 11px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-muted);
             pointer-events: none;
         }
@@ -141,7 +152,7 @@
         #filter-bar {
             display: flex;
             flex-wrap: wrap;
-            gap: 5px;
+            gap: 6px;
             max-height: 120px;
             overflow-y: auto;
             padding-right: 4px;
@@ -157,29 +168,29 @@
         }
 
         .filter-btn {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            color: #cbd5e1;
-            padding: 4px 9px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: #f1f5f9;
+            padding: 5px 11px;
             border-radius: 14px;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
 
         .filter-btn .dot {
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #94a3b8;
+            background: #cbd5e1;
         }
 
         .filter-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.18);
             color: #fff;
             transform: translateY(-1px);
         }
@@ -219,10 +230,10 @@
             background: var(--surface-glass);
             backdrop-filter: blur(16px);
             border: 1px solid var(--border-glass);
-            color: #e2e8f0;
-            padding: 7px 12px;
+            color: #ffffff;
+            padding: 8px 14px;
             border-radius: 11px;
-            font-size: 11.5px;
+            font-size: 13.5px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
@@ -233,8 +244,8 @@
         }
 
         .tool-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.3);
             color: #fff;
             transform: translateY(-1px);
         }
@@ -253,7 +264,7 @@
             backdrop-filter: blur(16px);
             border: 1px solid var(--border-glass);
             border-radius: 12px;
-            padding: 8px 14px;
+            padding: 9px 16px;
             display: flex;
             gap: 16px;
             align-items: center;
@@ -264,9 +275,10 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 11.5px;
+            font-size: 13.5px;
             font-weight: 600;
-            color: #e2e8f0;
+            color: #ffffff;
+            letter-spacing: -0.01em;
         }
 
         .slider-item input[type="range"] {
@@ -295,9 +307,10 @@
         }
 
         .val-badge {
-            font-size: 10.5px;
-            color: #94a3b8;
-            min-width: 32px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #cbd5e1;
+            min-width: 34px;
         }
 
         /* Focus Mode Status Bar */
@@ -310,9 +323,9 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(14px);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 7px 18px;
+            padding: 8px 20px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 700;
             color: #08090b;
             display: none;
@@ -534,31 +547,32 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         #preview-badge {
             padding: 4px 10px;
             border-radius: 8px;
-            font-size: 11px;
+            font-size: 12.5px;
             font-weight: 700;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: #ffffff;
         }
 
         .preview-ratio {
-            font-size: 11px;
+            font-size: 12px;
+            font-weight: 500;
             color: var(--text-muted);
         }
 
         #preview-name {
-            font-size: 13px;
+            font-size: 14.5px;
             font-weight: 600;
             word-break: break-all;
-            color: #e2e8f0;
-            margin-bottom: 12px;
-            line-height: 1.4;
+            color: #ffffff;
+            margin-bottom: 14px;
+            line-height: 1.45;
         }
 
         .preview-btn-row {
@@ -568,34 +582,34 @@
         }
 
         .btn-tool-action {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            color: #e2e8f0;
-            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 7px 11px;
             border-radius: 8px;
-            font-size: 11px;
+            font-size: 12.5px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
         }
 
         .btn-tool-action:hover {
-            background: rgba(255, 255, 255, 0.18);
-            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.35);
             color: #fff;
             transform: translateY(-1px);
         }
 
         .btn-full-view {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             color: #fff;
-            padding: 6px 10px;
+            padding: 7px 11px;
             border-radius: 8px;
-            font-size: 11px;
+            font-size: 12.5px;
             font-weight: 600;
             text-align: center;
             cursor: pointer;
@@ -604,22 +618,22 @@
         }
 
         .btn-full-view:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.22);
         }
 
         .btn-close-card {
             background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #94a3b8;
-            padding: 6px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #cbd5e1;
+            padding: 7px 11px;
             border-radius: 8px;
-            font-size: 11px;
+            font-size: 12px;
             cursor: pointer;
         }
 
         .btn-close-card:hover {
             color: #fff;
-            border-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.35);
         }
     </style>
     <!-- Three.js + Controls + Tween.js CDN -->
@@ -727,9 +741,9 @@
             <button class="lightbox-close-btn" onclick="closeLightbox()">&times;</button>
             <img id="lightbox-img" src="" alt="Full resolution view">
             <div class="lightbox-info-bar">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <div id="lightbox-badge" class="stats-badge">CATEGORY</div>
-                    <div id="lightbox-name" style="font-size:13px; font-weight:600; color:#e2e8f0;">filename.jpg</div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div id="lightbox-badge" class="stats-badge" style="font-size:13px; font-weight:700;">CATEGORY</div>
+                    <div id="lightbox-name" style="font-size:15px; font-weight:600; color:#ffffff;">filename.jpg</div>
                 </div>
                 <div class="lightbox-actions">
                     <button class="btn-tool-action" onclick="copyCurrentImage(this)">이미지 복사</button>
