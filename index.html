@@ -7,7 +7,8 @@
     <title>🪐 Pinterest 3D Galaxy Studio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg-base: #07090e;
@@ -334,7 +335,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         #loading-text {
@@ -387,8 +390,15 @@
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .preview-img-container {
@@ -436,8 +446,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         .lightbox-content {
@@ -492,7 +507,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
             transition: transform 0.2s ease;
         }
 
@@ -602,7 +617,6 @@
     <div id="canvas-container"></div>
 
     <!-- Loading Indicator -->
-    <!-- Loading Indicator -->
     <div id="loading-overlay">
         <div class="spinner-ring"></div>
         <div id="loading-text">데이터 로딩 중...</div>
@@ -622,9 +636,13 @@
     <div id="ui-overlay">
         <div class="header-title-row">
             <h1>Pinterest Galaxy</h1>
-            <div id="total-count-badge" class="stats-badge">0장</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
+                <button class="tool-btn" style="padding:4px 9px; font-size:11px; background:rgba(99,102,241,0.25); border-color:rgba(129,140,248,0.5);" onclick="document.getElementById('folder-input').click()">폴더 열기</button>
+                <div id="total-count-badge" class="stats-badge">0장</div>
+            </div>
         </div>
-        
+
         <div class="search-box">
             <input type="text" id="search-input" placeholder="파일명 또는 카테고리 검색..." autocomplete="off">
         </div>
@@ -798,96 +816,260 @@
         const dimSlider = document.getElementById("dim-slider");
         const dimVal = document.getElementById("dim-val");
 
-        // Load Galaxy JSON
+        // 🌟 100% 브라우저 순수 클라이언트 은하 데이터 구축 및 렌더러
+        function clearCurrentGalaxy() {
+            // 이전 스프라이트 메모리 해제 및 씬 정리
+            sprites.forEach(s => {
+                if (s.material) {
+                    if (s.material.map && s.material.map.isBlobUrl) {
+                        URL.revokeObjectURL(s.material.map.image.src);
+                        s.material.map.dispose();
+                    }
+                    s.material.dispose();
+                }
+                scene.remove(s);
+            });
+            sprites.length = 0;
+            categories.clear();
+            selectedCategories.clear();
+            selectedCategories.add("ALL");
+            highResTextureCache.clear();
+
+            // 필터 버튼 초기화 (전체보기만 남김)
+            const filterBar = document.getElementById("filter-bar");
+            filterBar.innerHTML = `
+                <button class="filter-btn active" data-category="ALL" onclick="filterCategory('ALL')">
+                    <span class="dot" style="background:#818cf8;"></span>전체보기
+                </button>
+            `;
+            searchQuery = "";
+            searchInput.value = "";
+            exitFocusMode();
+        }
+
+        // 🪐 [폴더 행성계 알고리즘]: 사진 개수에 비례하는 구체 표면적 + 피보나치 무충돌 균등 배치
+        function generatePlanetaryGalaxyCoordinates(items) {
+            // 1. 카테고리(하위 폴더)별 그룹화
+            const catMap = new Map();
+            items.forEach(it => {
+                const cat = it.category || "기본";
+                if (!catMap.has(cat)) catMap.set(cat, []);
+                catMap.get(cat).push(it);
+            });
+
+            const totalPlanets = catMap.size;
+            let planetIdx = 0;
+            const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+
+            catMap.forEach((pItems, catName) => {
+                const pCount = pItems.length;
+                // 사진 개수(pCount)에 비례하는 행성 구체 반지름 (사진이 많아도 겹침 0%)
+                const planetRadius = Math.max(30, Math.sqrt(pCount) * 18.5);
+
+                // 우주 은하 나선 궤도상에 각 행성 중심점(Center) 배치
+                let center;
+                if (totalPlanets === 1) {
+                    center = new THREE.Vector3(0, 0, 0);
+                } else {
+                    const orbitDist = Math.max(180, 220 * Math.sqrt(planetIdx + 1.2));
+                    const angle = planetIdx * 2.39996; // 균등 분산 나선 각도
+                    const height = (Math.sin(planetIdx * 1.5) * 110);
+                    center = new THREE.Vector3(
+                        Math.cos(angle) * orbitDist,
+                        height,
+                        Math.sin(angle) * orbitDist
+                    );
+                }
+
+                // 행성 표면에 피보나치 구면 알고리즘으로 사진들을 오차 0% 균등 배치
+                pItems.forEach((it, i) => {
+                    const theta = i * goldenAngle;
+                    const phi = Math.acos(1 - 2 * (i + 0.5) / pCount);
+
+                    const lx = planetRadius * Math.cos(theta) * Math.sin(phi);
+                    const ly = planetRadius * Math.sin(theta) * Math.sin(phi);
+                    const lz = planetRadius * Math.cos(phi);
+
+                    it.x = center.x + lx;
+                    it.y = center.y + ly;
+                    it.z = center.z + lz;
+                });
+
+                planetIdx++;
+            });
+
+            return items;
+        }
+
+        // 데이터 리스트를 Three.js 3D 공간에 렌더링
+        function loadGalaxyItems(dataList) {
+            clearCurrentGalaxy();
+
+            const totalItems = dataList.length;
+            totalBadge.innerText = `${totalItems}장`;
+            loadingOverlay.style.display = "flex";
+            loadingOverlay.style.opacity = "1";
+            progressBarFill.style.width = "0%";
+            progressSub.innerText = `0 / ${totalItems} (0%)`;
+
+            let loadedCount = 0;
+            function updateProgress() {
+                loadedCount++;
+                const percent = Math.min(100, Math.round((loadedCount / totalItems) * 100));
+                progressBarFill.style.width = percent + "%";
+                progressSub.innerText = `${loadedCount} / ${totalItems} (${percent}%)`;
+
+                if (loadedCount >= totalItems) {
+                    setTimeout(() => {
+                        loadingOverlay.style.opacity = "0";
+                        setTimeout(() => loadingOverlay.style.display = "none", 600);
+                        recalculateAllLayouts();
+                        resetCameraView();
+                    }, 200);
+                }
+            }
+
+            dataList.forEach((item, index) => {
+                categories.add(item.category);
+                const catColor = getCategoryColor(item.category);
+                const thumbUrl = item.thumb_path || item.path;
+
+                textureLoader.load(
+                    thumbUrl,
+                    (texture) => {
+                        if (item.isBlob) texture.isBlobUrl = true;
+                        const material = new THREE.SpriteMaterial({
+                            map: texture,
+                            transparent: true,
+                            opacity: 1.0,
+                            depthWrite: false
+                        });
+                        const sprite = new THREE.Sprite(material);
+
+                        const aspect = item.aspect_ratio || 1.0;
+                        updateSpriteScale(sprite, aspect, nodeBaseSize);
+
+                        const basePos = new THREE.Vector3(item.x, item.y, item.z);
+                        sprite.position.copy(basePos).multiplyScalar(galaxySpread);
+
+                        sprite.userData = {
+                            ...item,
+                            index: index,
+                            color: catColor,
+                            aspect: aspect,
+                            baseGalaxyPos: basePos,
+                            currentGalaxyPos: sprite.position.clone(),
+                            spherePos: new THREE.Vector3(),
+                            gridPos: new THREE.Vector3()
+                        };
+
+                        scene.add(sprite);
+                        sprites.push(sprite);
+                        updateProgress();
+                    },
+                    undefined,
+                    () => {
+                        console.warn("텍스처 로드 실패:", thumbUrl);
+                        updateProgress();
+                    }
+                );
+            });
+
+            // 카테고리 필터 버튼 동적 생성
+            const filterBar = document.getElementById("filter-bar");
+            categories.forEach(cat => {
+                const btn = document.createElement("button");
+                btn.className = "filter-btn";
+                btn.dataset.category = cat;
+                const color = getCategoryColor(cat);
+                btn.innerHTML = `<span class="dot" style="background:${color};"></span>${cat}`;
+                btn.onclick = () => filterCategory(cat);
+                filterBar.appendChild(btn);
+            });
+        }
+
+        // 📂 [폴더 선택 브라우저 직독]: 파이썬 0% 완전 브라우저 독립 실행
+        async function handleFolderSelection(fileList) {
+            if (!fileList || fileList.length === 0) return;
+
+            const validExts = ['.jpg', '.jpeg', '.png', '.webp', '.avif'];
+            const rawFiles = Array.from(fileList).filter(f => {
+                const name = f.name.toLowerCase();
+                return validExts.some(ext => name.endsWith(ext)) && !f.webkitRelativePath.includes('/.') && !f.webkitRelativePath.includes('/thumbnails/');
+            });
+
+            if (rawFiles.length === 0) {
+                alert("선택한 폴더에 지원되는 이미지(.jpg, .png, .webp, .avif)가 없습니다.");
+                return;
+            }
+
+            loadingOverlay.style.display = "flex";
+            loadingOverlay.style.opacity = "1";
+            document.getElementById("loading-text").innerText = "사진 폴더 분석 중...";
+            progressBarFill.style.width = "10%";
+            progressSub.innerText = `${rawFiles.length}장의 사진 감지`;
+
+            const parsedItems = [];
+            for (let f of rawFiles) {
+                const relPath = f.webkitRelativePath || f.name;
+                const parts = relPath.split('/');
+                let category = "기본";
+                if (parts.length > 2) {
+                    category = parts[1]; // 하위 폴더명을 카테고리로 지정
+                } else if (parts.length === 2) {
+                    category = parts[0];
+                }
+
+                const blobUrl = URL.createObjectURL(f);
+                parsedItems.push({
+                    filename: f.name,
+                    path: blobUrl,
+                    thumb_path: blobUrl,
+                    category: category,
+                    aspect_ratio: 1.0,
+                    isBlob: true,
+                    fileObj: f
+                });
+            }
+
+            // 🪐 폴더별 행성계 3D 좌표 즉시 연산 (수학 알고리즘)
+            const galaxyItems = generatePlanetaryGalaxyCoordinates(parsedItems);
+            document.getElementById("loading-text").innerText = "3D 행성계 생성 중...";
+            loadGalaxyItems(galaxyItems);
+        }
+
+        // 폴더 인풋 이벤트 바인딩
+        const folderInput = document.getElementById("folder-input");
+        if (folderInput) {
+            folderInput.addEventListener("change", (e) => {
+                handleFolderSelection(e.target.files);
+            });
+        }
+
+        // 🌐 화면 드래그 앤 드롭으로도 폴더 바로 열기 지원
+        window.addEventListener("dragover", (e) => {
+            e.preventDefault();
+        });
+        window.addEventListener("drop", (e) => {
+            e.preventDefault();
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFolderSelection(e.dataTransfer.files);
+            }
+        });
+
+        // 초기 시작: galaxy_data.json이 있으면 기본 로드, 없으면 안내 표시
         fetch("galaxy_data.json")
             .then(res => {
-                if (!res.ok) throw new Error("galaxy_data.json 파일을 찾을 수 없습니다.");
+                if (!res.ok) throw new Error("galaxy_data.json 파일 없음");
                 return res.json();
             })
             .then(data => {
-                const totalItems = data.length;
-                totalBadge.innerText = `${totalItems}장`;
-                let loadedCount = 0;
-
-                function updateProgress() {
-                    loadedCount++;
-                    const percent = Math.min(100, Math.round((loadedCount / totalItems) * 100));
-                    progressBarFill.style.width = percent + "%";
-                    progressSub.innerText = `${loadedCount} / ${totalItems} (${percent}%)`;
-
-                    if (loadedCount >= totalItems) {
-                        setTimeout(() => {
-                            loadingOverlay.style.opacity = "0";
-                            setTimeout(() => loadingOverlay.style.display = "none", 600);
-                            recalculateAllLayouts();
-                        }, 200);
-                    }
-                }
-
-                data.forEach((item, index) => {
-                    categories.add(item.category);
-                    const catColor = getCategoryColor(item.category);
-
-                    // Load Thumbnail Texture
-                    const thumbUrl = item.thumb_path || item.path;
-                    textureLoader.load(
-                        thumbUrl,
-                        (texture) => {
-                            const material = new THREE.SpriteMaterial({
-                                map: texture,
-                                transparent: true,
-                                opacity: 1.0,
-                                depthWrite: false
-                            });
-                            const sprite = new THREE.Sprite(material);
-
-                            // Calculate aspect ratio scale
-                            const aspect = item.aspect_ratio || 1.0;
-                            updateSpriteScale(sprite, aspect, nodeBaseSize);
-
-                            // Initial position with default 1.8x spread factor applied
-                            const basePos = new THREE.Vector3(item.x, item.y, item.z);
-                            sprite.position.copy(basePos).multiplyScalar(galaxySpread);
-
-                            sprite.userData = {
-                                ...item,
-                                index: index,
-                                color: catColor,
-                                aspect: aspect,
-                                baseGalaxyPos: basePos,
-                                currentGalaxyPos: sprite.position.clone(),
-                                spherePos: new THREE.Vector3(),
-                                gridPos: new THREE.Vector3()
-                            };
-
-                            scene.add(sprite);
-                            sprites.push(sprite);
-                            updateProgress();
-                        },
-                        undefined,
-                        (err) => {
-                            console.warn("텍스처 로드 실패:", thumbUrl);
-                            updateProgress();
-                        }
-                    );
-                });
-
-                // Populate Category Buttons
-                const filterBar = document.getElementById("filter-bar");
-                categories.forEach(cat => {
-                    const btn = document.createElement("button");
-                    btn.className = "filter-btn";
-                    btn.dataset.category = cat;
-                    const color = getCategoryColor(cat);
-                    btn.innerHTML = `<span class="dot" style="background:${color};"></span>${cat}`;
-                    btn.onclick = () => filterCategory(cat);
-                    filterBar.appendChild(btn);
-                });
+                loadGalaxyItems(data);
             })
-            .catch(err => {
-                console.error("데이터 로드 오류:", err);
-                document.getElementById("loading-text").innerText = "⚠️ galaxy_data.json 로드 실패";
-                progressSub.innerText = "process_data.py를 먼저 실행해 주세요.";
+            .catch(() => {
+                loadingOverlay.style.opacity = "0";
+                setTimeout(() => loadingOverlay.style.display = "none", 400);
+                totalBadge.innerText = "폴더를 열어주세요";
             });
 
         function updateSpriteScale(sprite, aspect, baseSize) {
@@ -958,7 +1140,7 @@
         }
 
         // --- Layout Switcher ---
-        window.switchLayout = function(mode) {
+        window.switchLayout = function (mode) {
             currentLayout = mode;
             document.getElementById("btn-mode-galaxy").classList.toggle("active-mode", mode === 'galaxy');
             document.getElementById("btn-mode-sphere").classList.toggle("active-mode", mode === 'sphere');
@@ -1384,7 +1566,7 @@
         }
 
         // Exit Focus Mode -> Restore 100% Opacity to all nodes
-        window.exitFocusMode = function() {
+        window.exitFocusMode = function () {
             focusBanner.style.display = "none";
             if (focusedSprite) {
                 focusedSprite.renderOrder = 0;
@@ -1398,19 +1580,19 @@
             });
         };
 
-        window.closePreview = function() {
+        window.closePreview = function () {
             previewCard.style.display = "none";
             exitFocusMode();
         };
 
         // 🎯 앱 상에서 해당 사진의 3D 위치로 카메라 즉시 비행
-        window.flyToCurrentPhoto = function() {
+        window.flyToCurrentPhoto = function () {
             if (!focusedSprite) return;
             enterFocusMode(focusedSprite);
         };
 
         // 📁 Mac Finder에서 실제 사진 파일 위치 열기
-        window.revealInFinder = function() {
+        window.revealInFinder = function () {
             if (!focusedSprite || !focusedSprite.userData) return;
             const itemPath = focusedSprite.userData.path;
             fetch("/api/reveal?path=" + encodeURIComponent(itemPath))
@@ -1429,7 +1611,7 @@
         };
 
         // 🔍 풀스크린 대형 라이트박스 뷰어 열기 / 닫기
-        window.openLightbox = function() {
+        window.openLightbox = function () {
             if (!focusedSprite || !focusedSprite.userData) return;
             const item = focusedSprite.userData;
             const modal = document.getElementById("lightbox-modal");
@@ -1441,14 +1623,14 @@
             modal.style.display = "flex";
         };
 
-        window.closeLightbox = function() {
+        window.closeLightbox = function () {
             const modal = document.getElementById("lightbox-modal");
             if (modal) {
                 modal.style.display = "none";
             }
         };
 
-        window.resetCameraView = function() {
+        window.resetCameraView = function () {
             exitFocusMode();
             let targetPos = DEFAULT_CAM_POS;
             if (currentLayout === 'grid') {
@@ -1478,7 +1660,7 @@
                 .start();
         };
 
-        window.toggleAutoRotate = function() {
+        window.toggleAutoRotate = function () {
             controls.autoRotate = !controls.autoRotate;
         };
 
@@ -1532,8 +1714,8 @@
 
             // 키보드 WASD 이동 & [ / ] 줌 로직
             const isMoving = keysPressed['w'] || keysPressed['a'] || keysPressed['s'] || keysPressed['d'] ||
-                             keysPressed['KeyW'] || keysPressed['KeyA'] || keysPressed['KeyS'] || keysPressed['KeyD'] ||
-                             keysPressed['['] || keysPressed[']'] || keysPressed['BracketLeft'] || keysPressed['BracketRight'];
+                keysPressed['KeyW'] || keysPressed['KeyA'] || keysPressed['KeyS'] || keysPressed['KeyD'] ||
+                keysPressed['['] || keysPressed[']'] || keysPressed['BracketLeft'] || keysPressed['BracketRight'];
 
             if (isMoving) {
                 // 카메라 거리에 비례하여 이동 속도를 동적으로 스케일링 (멀리 있을 땐 빠르게, 가까이선 정밀하게)
