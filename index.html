@@ -962,19 +962,66 @@
         controls.autoRotateSpeed = 0.5;
         controls.screenSpacePanning = true;
 
-        // Background Star Dust Particles
+        // Background Realistic Deep Space Stars (방해되지 않는 은은하고 사실적인 심우주 성단)
         const starGeo = new THREE.BufferGeometry();
-        const starCount = 1800;
+        const starCount = 3600;
         const starPositions = new Float32Array(starCount * 3);
-        for (let i = 0; i < starCount * 3; i++) {
-            starPositions[i] = (Math.random() - 0.5) * 8000;
+        const starColors = new Float32Array(starCount * 3);
+
+        // 천문학적 별 색온도 팔레트: 순백(A형), 미세한 백청색(B형), 따뜻한 미색(G형), 옅은 앰버(K형)
+        const starColorPalette = [
+            new THREE.Color(0xffffff), // 화이트 (주류)
+            new THREE.Color(0xf1f5f9), // 플래티넘 화이트
+            new THREE.Color(0xe2e8f0), // 쿨 실버
+            new THREE.Color(0xdbeafe), // 미세한 페일 블루 (오리온/베가 성운 느낌)
+            new THREE.Color(0xfef3c7), // 따뜻한 미색
+        ];
+
+        for (let i = 0; i < starCount; i++) {
+            // 구면 무작위 쉘 분포로 공간 입체감 극대화 (가까운 별 30%, 먼 배경 별 70%)
+            const radius = 1200 + Math.random() * 16000;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos((Math.random() * 2) - 1);
+
+            starPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+            starPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            starPositions[i * 3 + 2] = radius * Math.cos(phi);
+
+            const pickedColor = starColorPalette[Math.floor(Math.random() * starColorPalette.length)];
+            // 사진 감상에 방해되지 않도록 명도를 0.4~0.75 수준으로 은은하게 조율
+            const brightness = 0.35 + Math.random() * 0.45;
+            starColors[i * 3] = pickedColor.r * brightness;
+            starColors[i * 3 + 1] = pickedColor.g * brightness;
+            starColors[i * 3 + 2] = pickedColor.b * brightness;
         }
+
         starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+        // 원형 포인트 캔버스 텍스처로 네모난 도트가 아닌 부드러운 발광 구체 별 생성
+        function createStarTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.2, 'rgba(240, 245, 255, 0.8)');
+            gradient.addColorStop(0.6, 'rgba(200, 220, 255, 0.2)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 32, 32);
+            return new THREE.CanvasTexture(canvas);
+        }
+
         const starMat = new THREE.PointsMaterial({
-            color: 0x475569,
-            size: 1.8,
+            size: 2.2,
+            map: createStarTexture(),
+            vertexColors: true,
             transparent: true,
-            opacity: 0.35
+            opacity: 0.65,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
         });
         const starField = new THREE.Points(starGeo, starMat);
         scene.add(starField);
@@ -2346,6 +2393,12 @@
                 if (!focusedSprite) {
                     controls.target.z = 0;
                 }
+            }
+
+            // 원거리 심우주 별들의 미세한 자연 자전 (초당 0.00008 rad의 극미세 궤도 유영)
+            if (starField) {
+                starField.rotation.y += 0.00008;
+                starField.rotation.x += 0.00003;
             }
 
             controls.update();
